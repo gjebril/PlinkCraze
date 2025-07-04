@@ -31,34 +31,38 @@ export class Ball {
       const unpaddedX = unpad(this.x);
       const unpaddedY = unpad(this.y);
 
-      // Glowing ball with light trail effect
-      const gradient = this.ctx.createRadialGradient(
-        unpaddedX, unpaddedY, 0,
-        unpaddedX, unpaddedY, this.radius * 2
+      // Subtle outer glow (much smaller)
+      const glowGradient = this.ctx.createRadialGradient(
+        unpaddedX, unpaddedY, this.radius * 0.8,
+        unpaddedX, unpaddedY, this.radius * 1.3
       );
-      gradient.addColorStop(0, 'rgba(255, 215, 0, 1)'); // Bright gold center
-      gradient.addColorStop(0.6, 'rgba(255, 165, 0, 0.8)'); // Orange glow
-      gradient.addColorStop(1, 'rgba(255, 140, 0, 0)'); // Faded trail
+      glowGradient.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
+      glowGradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
 
-      // Draw glowing edge first
       this.ctx.beginPath();
-      this.ctx.arc(unpaddedX, unpaddedY, this.radius * 2, 0, Math.PI * 2);
-      this.ctx.fillStyle = gradient;
+      this.ctx.arc(unpaddedX, unpaddedY, this.radius * 1.3, 0, Math.PI * 2);
+      this.ctx.fillStyle = glowGradient;
       this.ctx.fill();
       this.ctx.closePath();
 
-      // Draw main ball
+      // Sharp main ball with defined edges
       const ballGradient = this.ctx.createRadialGradient(
         unpaddedX - this.radius * 0.3, unpaddedY - this.radius * 0.3, 0,
         unpaddedX, unpaddedY, this.radius
       );
       ballGradient.addColorStop(0, '#ffd700'); // Gold highlight
-      ballGradient.addColorStop(1, '#ff8c00'); // Orange edge
+      ballGradient.addColorStop(0.7, '#ffb000'); // Mid gold
+      ballGradient.addColorStop(1, '#ff8c00'); // Sharp orange edge
 
       this.ctx.beginPath();
       this.ctx.arc(unpaddedX, unpaddedY, this.radius, 0, Math.PI * 2);
       this.ctx.fillStyle = ballGradient;
       this.ctx.fill();
+      
+      // Add a subtle border for sharpness
+      this.ctx.strokeStyle = '#cc7000';
+      this.ctx.lineWidth = 0.5;
+      this.ctx.stroke();
       this.ctx.closePath();
     }
   
