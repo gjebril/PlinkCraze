@@ -36,8 +36,8 @@ export class Ball {
         unpaddedX, unpaddedY, 0, // Inner circle (center)
         unpaddedX, unpaddedY, this.radius // Outer circle (edge of the ball)
       );
-      gradient.addColorStop(0, 'rgba(255, 255, 0, 1)'); // Bright yellow at the center
-      gradient.addColorStop(1, 'rgba(255, 255, 0, 0.5)'); // Faded yellow at the edges
+      gradient.addColorStop(0, 'rgba(245, 158, 11, 1)'); // Golden center
+      gradient.addColorStop(1, 'rgba(245, 158, 11, 0.8)'); // Slightly faded golden edges
 
       this.ctx.beginPath();
       this.ctx.arc(unpaddedX, unpaddedY, this.radius, 0, Math.PI * 2);

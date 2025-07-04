@@ -1,7 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BallManager } from "../game/classes/BallManager";
-import { Button } from "../components/ui";
 import { playGame } from "../game/gameLogic";
 
 interface MultiplierResult {
@@ -35,41 +34,102 @@ export function Game() {
   }, [canvasRef]);
 
   return (
-    <div className="flex items-center justify-center w-full h-screen bg-dark-blue">
-      <div className="flex flex-col lg:flex-row items-center justify-center w-full h-full max-w-7xl mx-auto p-4">
-        <div className="w-full lg:w-1/4 bg-dark-blue-secondary p-6 rounded-lg flex items-center justify-center mb-4 lg:mb-0 lg:mr-6">
-          <Button
-            className="w-full bg-highlight-green text-black font-bold py-6 rounded-lg text-lg"
-            onClick={async () => {
-              const response = await playGame();
-              if (ballManager) {
-                ballManager.addBall(response.point);
-              }
-            }}
-          >
-            BET
-          </Button>
+    <div className="flex w-full h-screen bg-gray-900">
+      {/* Left Sidebar */}
+      <div className="w-80 bg-gray-800 p-6 flex flex-col space-y-6">
+        {/* Manual/Auto Toggle */}
+        <div className="flex bg-gray-700 rounded-lg p-1">
+          <button className="flex-1 bg-gray-600 text-white py-2 rounded-md font-medium">
+            Manual
+          </button>
+          <button className="flex-1 text-gray-400 py-2 rounded-md font-medium">
+            Auto
+          </button>
         </div>
-        <div className="flex-1 flex items-center justify-center relative">
-          <canvas ref={canvasRef} width="800" height="800" className="w-full h-full max-w-[800px] max-h-[800px] rounded-lg"></canvas>
-          <div className="absolute top-4 right-4 flex flex-col space-y-2 p-3">
-            {lastMultipliers.map((result, index) => (
-              <div
-                key={index}
-                className="px-4 py-2 rounded text-sm font-bold min-w-[60px] text-center shadow-lg border border-black border-opacity-20"
-                style={{
-                  backgroundColor: result.color,
-                  opacity: (index + 1) / lastMultipliers.length, // Fading effect
-                  color: result.multiplier === 16 ? 'white' : 'black',
-                  fontFamily: 'Arial, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 'bold'
-                }}
-              >
-                {result.multiplier}x
-              </div>
-            ))}
+
+        {/* Bet Amount */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <label className="text-gray-300 font-medium">Bet Amount</label>
+            <span className="text-gray-400 text-sm">0.00 NZD</span>
           </div>
+          <div className="flex items-center bg-gray-700 rounded-lg p-3">
+            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+              <span className="text-white text-xs font-bold">$</span>
+            </div>
+            <input 
+              type="text" 
+              value="0.00000000"
+              className="flex-1 bg-transparent text-white outline-none"
+              readOnly
+            />
+            <div className="flex space-x-2 ml-3">
+              <button className="text-gray-400 hover:text-white">½</button>
+              <button className="text-gray-400 hover:text-white">2x</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Risk */}
+        <div>
+          <label className="text-gray-300 font-medium mb-3 block">Risk</label>
+          <div className="flex space-x-2">
+            <button className="flex-1 bg-gray-600 text-white py-2 rounded-md font-medium">
+              Low
+            </button>
+            <button className="flex-1 text-gray-400 py-2 rounded-md font-medium hover:bg-gray-700">
+              Medium
+            </button>
+            <button className="flex-1 text-gray-400 py-2 rounded-md font-medium hover:bg-gray-700">
+              High
+            </button>
+          </div>
+        </div>
+
+        {/* Rows */}
+        <div>
+          <label className="text-gray-300 font-medium mb-3 block">Rows</label>
+          <div className="text-white text-xl">16</div>
+        </div>
+
+        {/* Bet Button */}
+        <button
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-lg text-lg transition-colors"
+          onClick={async () => {
+            const response = await playGame();
+            if (ballManager) {
+              ballManager.addBall(response.point);
+            }
+          }}
+        >
+          Bet
+        </button>
+      </div>
+
+      {/* Game Area */}
+      <div className="flex-1 flex items-center justify-center relative bg-gray-900">
+        <canvas 
+          ref={canvasRef} 
+          width="800" 
+          height="800" 
+          className="max-w-[600px] max-h-[600px] w-full h-full"
+        />
+
+        {/* Right Side Multipliers */}
+        <div className="absolute top-6 right-6 flex flex-col space-y-2">
+          {lastMultipliers.map((result, index) => (
+            <div
+              key={index}
+              className="px-3 py-1 rounded-full text-sm font-bold min-w-[50px] text-center"
+              style={{
+                backgroundColor: '#f59e0b',
+                opacity: (index + 1) / lastMultipliers.length,
+                color: 'black'
+              }}
+            >
+              {result.multiplier}x
+            </div>
+          ))}
         </div>
       </div>
     </div>
