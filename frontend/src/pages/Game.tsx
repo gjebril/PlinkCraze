@@ -62,30 +62,32 @@ export function Game() {
       </div>
 
       {/* Full Game Area */}
-      <div className="flex-1 flex items-center justify-center p-4 relative">
-        <canvas 
-          ref={canvasRef} 
-          width="800" 
-          height="800" 
-          className="w-full h-full max-w-[90vmin] max-h-[90vmin] rounded-lg shadow-2xl"
-        />
-        
-        {/* Rolling Multiplier Display - Top Right */}
-        <div className="absolute top-6 right-6 flex flex-col space-y-2">
-          {lastMultipliers.map((result, index) => (
-            <div
-              key={index}
-              className="px-3 py-1 rounded-full text-sm font-bold min-w-[50px] text-center shadow-lg"
-              style={{
-                backgroundColor: result.color,
-                opacity: (index + 1) / lastMultipliers.length,
-                color: result.multiplier === 16 ? 'white' : 'black',
-                fontFamily: 'Inter, sans-serif'
-              }}
-            >
-              {result.multiplier}x
-            </div>
-          ))}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="relative w-full h-full max-w-[90vmin] max-h-[90vmin]">
+          <canvas 
+            ref={canvasRef} 
+            width="800" 
+            height="800" 
+            className="w-full h-full rounded-lg shadow-2xl"
+          />
+          
+          {/* Rolling Multiplier Display - Inside Game Frame */}
+          <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+            {lastMultipliers.map((result, index) => (
+              <div
+                key={index}
+                className="px-3 py-1 rounded-full text-sm font-bold min-w-[50px] text-center shadow-lg"
+                style={{
+                  backgroundColor: result.color,
+                  opacity: (index + 1) / lastMultipliers.length,
+                  color: result.multiplier === 16 ? 'white' : 'black',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                {result.multiplier}x
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
