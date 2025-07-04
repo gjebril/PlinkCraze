@@ -63,19 +63,33 @@ export class BallManager {
             const progress = elapsed / ripple.duration;
 
             if (progress < 1) {
-                // Ease-out function for smoother animation
-                const easedProgress = 1 - Math.pow(1 - progress, 3);
-                const currentRadius = ripple.maxRadius * easedProgress;
+                // Fixed radius - no expansion
+                const radius = ripple.maxRadius;
                 
-                // Smoother opacity fade with ease-in
-                const opacity = Math.pow(1 - progress, 2) * 0.6; // Max opacity 0.6 instead of 1
+                // Fade from bright to transparent
+                const opacity = (1 - progress) * 0.8; // Start at 0.8, fade to 0
 
+                // Create glowing effect with multiple layers
+                this.ctx.save();
+                
+                // Outer glow
+                this.ctx.shadowColor = `rgba(173, 216, 230, ${opacity * 0.5})`;
+                this.ctx.shadowBlur = radius * 0.8;
+                this.ctx.strokeStyle = `rgba(173, 216, 230, ${opacity * 0.3})`;
+                this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
-                this.ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
-                this.ctx.strokeStyle = `rgba(173, 216, 230, ${opacity})`; // Light blue ripple
-                this.ctx.lineWidth = 2;
+                this.ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2);
                 this.ctx.stroke();
-                this.ctx.closePath();
+                
+                // Inner glow
+                this.ctx.shadowBlur = radius * 0.4;
+                this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.6})`;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(ripple.x, ripple.y, radius * 0.7, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                this.ctx.restore();
                 return true;
             }
             return false;
