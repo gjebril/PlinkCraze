@@ -1,0 +1,30 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "start": "node dist/index.js",
+    "package": "pkg ."
+  },
+  "bin": "dist/index.js",
+  "pkg": {
+    "assets": "../frontend/dist/**/*",
+    "targets": ["node18-win-x64"],
+    "outputPath": "./dist-exec"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "axios": "^1.10.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,46 @@
+request example:
+curl --location 'http://4.237.228.146:7575/api/Plinko/play' \
+--header 'accept: text/plain' \
+--header 'X-API-Key: 1234' \
+--header 'Content-Type: application/json' \
+--data '{
+  "userId": "GabyPlinkoMaster",
+  "amount": 1,
+  "rows": 16,
+  "risk": "Low",
+  "currency": "USDT"
+}'
+
+
+
+request Response:
+{
+    "success": true,
+    "message": "Operation succeeded",
+    "data": {
+        "betId": "a82f6d9a-683c-4ac7-99e8-e45d10c7109a",
+        "currency": "USDT",
+        "amount": 1,
+        "payout": 1.1,
+        "rows": 16,
+        "plinkoResult": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+        ],
+        "multiplier": 1.1
+    }
+}
