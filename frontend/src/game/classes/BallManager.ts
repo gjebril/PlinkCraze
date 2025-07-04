@@ -51,8 +51,8 @@ export class BallManager {
             x,
             y,
             startTime: Date.now(),
-            duration: 800, // milliseconds - slower expansion
-            maxRadius: 15, // smaller radius
+            duration: 300, // faster fade
+            maxRadius: 15, // fixed radius
         });
     }
 
@@ -63,33 +63,23 @@ export class BallManager {
             const progress = elapsed / ripple.duration;
 
             if (progress < 1) {
-                // Fixed radius - no expansion
-                const radius = ripple.maxRadius;
-                
                 // Fade from bright to transparent
-                const opacity = (1 - progress) * 0.8; // Start at 0.8, fade to 0
+                const opacity = (1 - progress) * 0.6;
 
-                // Create glowing effect with multiple layers
-                this.ctx.save();
-                
-                // Outer glow
-                this.ctx.shadowColor = `rgba(173, 216, 230, ${opacity * 0.5})`;
-                this.ctx.shadowBlur = radius * 0.8;
-                this.ctx.strokeStyle = `rgba(173, 216, 230, ${opacity * 0.3})`;
-                this.ctx.lineWidth = 3;
+                // Create radial gradient for glow effect
+                const gradient = this.ctx.createRadialGradient(
+                    ripple.x, ripple.y, 0,
+                    ripple.x, ripple.y, ripple.maxRadius
+                );
+                gradient.addColorStop(0, `rgba(173, 216, 230, ${opacity})`);
+                gradient.addColorStop(0.5, `rgba(173, 216, 230, ${opacity * 0.5})`);
+                gradient.addColorStop(1, `rgba(173, 216, 230, 0)`);
+
+                this.ctx.fillStyle = gradient;
                 this.ctx.beginPath();
-                this.ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2);
-                this.ctx.stroke();
-                
-                // Inner glow
-                this.ctx.shadowBlur = radius * 0.4;
-                this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.6})`;
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(ripple.x, ripple.y, radius * 0.7, 0, Math.PI * 2);
-                this.ctx.stroke();
-                
-                this.ctx.restore();
+                this.ctx.arc(ripple.x, ripple.y, ripple.maxRadius, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.closePath();
                 return true;
             }
             return false;
