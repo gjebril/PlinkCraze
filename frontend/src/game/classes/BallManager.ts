@@ -83,7 +83,7 @@ export class BallManager {
     }
 
     drawObstacles() {
-        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillStyle = '#a9cde2';
         this.obstacles.forEach((obstacle) => {
             this.ctx.beginPath();
             this.ctx.arc(unpad(obstacle.x), unpad(obstacle.y), obstacle.radius, 0, Math.PI * 2);
@@ -208,9 +208,7 @@ export class BallManager {
     }
 
     draw() {
-        // Dark background
-        this.ctx.fillStyle = '#1f2937';
-        this.ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        this.ctx.clearRect(0, 0, WIDTH, HEIGHT);
         this.drawObstacles();
         this.drawSinks();
         this.drawRipples();
