@@ -31,17 +31,33 @@ export class Ball {
       const unpaddedX = unpad(this.x);
       const unpaddedY = unpad(this.y);
 
-      // Create a radial gradient for the faded center effect
+      // Glowing ball with light trail effect
       const gradient = this.ctx.createRadialGradient(
-        unpaddedX, unpaddedY, 0, // Inner circle (center)
-        unpaddedX, unpaddedY, this.radius // Outer circle (edge of the ball)
+        unpaddedX, unpaddedY, 0,
+        unpaddedX, unpaddedY, this.radius * 2
       );
-      gradient.addColorStop(0, 'rgba(255, 255, 0, 1)'); // Bright yellow at the center
-      gradient.addColorStop(1, 'rgba(255, 255, 0, 0.5)'); // Faded yellow at the edges
+      gradient.addColorStop(0, 'rgba(255, 215, 0, 1)'); // Bright gold center
+      gradient.addColorStop(0.6, 'rgba(255, 165, 0, 0.8)'); // Orange glow
+      gradient.addColorStop(1, 'rgba(255, 140, 0, 0)'); // Faded trail
+
+      // Draw glowing edge first
+      this.ctx.beginPath();
+      this.ctx.arc(unpaddedX, unpaddedY, this.radius * 2, 0, Math.PI * 2);
+      this.ctx.fillStyle = gradient;
+      this.ctx.fill();
+      this.ctx.closePath();
+
+      // Draw main ball
+      const ballGradient = this.ctx.createRadialGradient(
+        unpaddedX - this.radius * 0.3, unpaddedY - this.radius * 0.3, 0,
+        unpaddedX, unpaddedY, this.radius
+      );
+      ballGradient.addColorStop(0, '#ffd700'); // Gold highlight
+      ballGradient.addColorStop(1, '#ff8c00'); // Orange edge
 
       this.ctx.beginPath();
       this.ctx.arc(unpaddedX, unpaddedY, this.radius, 0, Math.PI * 2);
-      this.ctx.fillStyle = gradient;
+      this.ctx.fillStyle = ballGradient;
       this.ctx.fill();
       this.ctx.closePath();
     }

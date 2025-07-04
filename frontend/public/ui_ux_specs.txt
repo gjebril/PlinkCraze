@@ -1,0 +1,84 @@
+Plinko Game Design Specification (UI/UX Brief)
+
+Purpose:
+Create a sleek, interactive Plinko game interface. The game area should be the main focus. The left panel should contain only one interactive element — the “Bet” button. All other unnecessary UI components should be removed.
+
+⸻
+
+Layout:
+	•	Full-screen layout with two main sections:
+	1.	Left panel: Only includes a “Bet” button.
+	2.	Main game area: Full Plinko game experience.
+
+⸻
+
+Left Panel (Minimal):
+	•	Only show a “Bet” button.
+	•	Button label: “BET” or “BET $X” if a preset amount exists.
+	•	Style:
+	•	Prominent and visually distinct (suggested: orange or green).
+	•	Rounded edges.
+	•	Includes hover and click state animations.
+	•	Subtle pulse or glow to draw attention.
+	•	Vertical center alignment on the left side.
+	•	On mobile, button should shrink to icon-only or dock at bottom-left.
+
+⸻
+
+Main Game Area (Plinko):
+
+Ball Drop:
+	•	Ball drops from the top center.
+	•	User does NOT choose drop location.
+	•	Ball appearance: glowing edge and light trail.
+	•	Smooth bounce physics.
+
+Pegs (Obstacles):
+	•	Evenly spaced pegs in a triangle pattern.
+	•	Metallic or glowing circular style.
+	•	On every peg hit, a ripple effect should trigger:
+	•	Originates from peg contact point.
+	•	Expands out and fades in ~0.5s.
+	•	Should occur consistently on every peg hit.
+
+Multiplier Sink Row (Bottom Buckets):
+	•	Rectangular zones labeled with multipliers like 0.2x, 2x, 5x, etc.
+	•	When a ball lands in a sink:
+	•	Zone glows or flashes.
+	•	Text does a bounce or scaling animation.
+	•	Slight shake effect on the bucket is optional.
+	•	Multiplier text should be bold and color-coded (e.g., blue = low, gold/red = high).
+
+⸻
+
+UX and Game Flow:
+	•	User clicks “Bet” → Ball drops immediately.
+	•	Avoid popups, overlays, or delays.
+	•	Immediate visual and audio feedback.
+	•	Gameplay should feel smooth, snappy, and satisfying.
+
+⸻
+
+Visual Style (Suggestions):
+	•	Font: Inter or Roboto, bold.
+	•	Pegs: Light metal or translucent glow.
+	•	Ripple: Subtle white or light blue.
+	•	Multiplier text: Vibrant color or gradient fill.
+	•	Background: Dark gradient or soft texture.
+	•	Maintain 60fps visuals — use canvas or WebGL.
+
+⸻
+
+Mobile Responsiveness:
+	•	All components scale to fit mobile view.
+	•	Bet button becomes a floating button or docks bottom-left.
+	•	Pegs, ball, and sink sizes adjust accordingly.
+	•	Multiplier text should remain legible on small screens.
+
+⸻
+
+Developer Notes:
+	•	Use HTML5 canvas or WebGL.
+	•	Physics engine can be matter.js or p2.js.
+	•	Ripple effects and animations should be GPU-accelerated where possible.
+	•	Keep code modular — left panel and canvas are separate components.

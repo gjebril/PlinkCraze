@@ -72,8 +72,8 @@ export class BallManager {
 
                 this.ctx.beginPath();
                 this.ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
-                this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                this.ctx.lineWidth = 1.5; // Thinner line
+                this.ctx.strokeStyle = `rgba(173, 216, 230, ${opacity})`; // Light blue ripple
+                this.ctx.lineWidth = 2;
                 this.ctx.stroke();
                 this.ctx.closePath();
                 return true;
@@ -83,11 +83,25 @@ export class BallManager {
     }
 
     drawObstacles() {
-        this.ctx.fillStyle = '#a9cde2';
         this.obstacles.forEach((obstacle) => {
+            const x = unpad(obstacle.x);
+            const y = unpad(obstacle.y);
+            
+            // Metallic/glowing peg with gradient
+            const pegGradient = this.ctx.createRadialGradient(x, y, 0, x, y, obstacle.radius);
+            pegGradient.addColorStop(0, '#e5e7eb');
+            pegGradient.addColorStop(0.7, '#9ca3af');
+            pegGradient.addColorStop(1, '#6b7280');
+            
             this.ctx.beginPath();
-            this.ctx.arc(unpad(obstacle.x), unpad(obstacle.y), obstacle.radius, 0, Math.PI * 2);
+            this.ctx.arc(x, y, obstacle.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = pegGradient;
             this.ctx.fill();
+            
+            // Glowing edge
+            this.ctx.strokeStyle = 'rgba(229, 231, 235, 0.5)';
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
             this.ctx.closePath();
         });
     }
@@ -150,11 +164,22 @@ export class BallManager {
                 this.shakingSinks.delete(i); // Remove if shake is over
             }
 
-            this.ctx.fillStyle = this.getColor(i).background;
+            const colorInfo = this.getColor(i);
             const x = sink.x - SPACING / 2 + offsetX;
             const y = sink.y - sink.height / 2 + offsetY;
-            const width = sink.width - SPACING / 4; // Reduce width slightly to create a gap
+            const width = sink.width - SPACING / 4;
             const height = sink.height;
+            
+            // Add glow effect if shaking (recently hit)
+            if (shakeEndTime && Date.now() < shakeEndTime) {
+                this.ctx.save();
+                this.ctx.shadowColor = colorInfo.background;
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowOffsetX = 0;
+                this.ctx.shadowOffsetY = 0;
+            }
+            
+            this.ctx.fillStyle = colorInfo.background;
 
             // Draw shadow
             this.ctx.save();
@@ -198,17 +223,40 @@ export class BallManager {
             this.ctx.lineWidth = 1;
             this.ctx.stroke();
 
-            // Draw text
-            this.ctx.fillStyle = this.getColor(i).color;
-            this.ctx.font = 'bold 14px Arial'; // Bolder and slightly larger font
+            // Draw text with bounce animation
+            this.ctx.fillStyle = colorInfo.color;
+            
+            // Scale text if recently hit for bounce effect
+            let textScale = 1;
+            if (shakeEndTime && Date.now() < shakeEndTime) {
+                const elapsed = Date.now() - (shakeEndTime - 200);
+                textScale = 1 + Math.sin(elapsed * 0.02) * 0.3; // Bounce effect
+                this.ctx.save();
+                this.ctx.translate(x + width / 2, y + height / 2);
+                this.ctx.scale(textScale, textScale);
+                this.ctx.translate(-(x + width / 2), -(y + height / 2));
+            }
+            
+            this.ctx.font = 'bold 14px Inter, sans-serif';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText((sink?.multiplier)?.toString() + "x", x + width / 2, y + height / 2);
+            
+            if (shakeEndTime && Date.now() < shakeEndTime) {
+                this.ctx.restore(); // Restore scale transformation
+                this.ctx.restore(); // Restore glow effect
+            }
         }
     }
 
     draw() {
-        this.ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        // Dark gradient background
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, HEIGHT);
+        gradient.addColorStop(0, '#1f2937');
+        gradient.addColorStop(1, '#111827');
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        
         this.drawObstacles();
         this.drawSinks();
         this.drawRipples();
