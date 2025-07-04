@@ -76,12 +76,15 @@ export function Game() {
             {lastMultipliers.map((result, index) => (
               <div
                 key={index}
-                className="px-3 py-1 rounded-full text-sm font-bold min-w-[50px] text-center shadow-lg"
+                className="px-4 py-2 text-sm font-bold min-w-[70px] text-center shadow-lg"
                 style={{
                   backgroundColor: result.color,
                   opacity: (index + 1) / lastMultipliers.length,
                   color: result.multiplier === 16 ? 'white' : 'black',
-                  fontFamily: 'Inter, sans-serif'
+                  fontFamily: 'Inter, sans-serif',
+                  borderRadius: '5px',
+                  border: '1px solid rgba(0, 0, 0, 0.2)',
+                  boxShadow: '4px 4px 8px rgba(0, 0, 0, 0.5)'
                 }}
               >
                 {result.multiplier}x
