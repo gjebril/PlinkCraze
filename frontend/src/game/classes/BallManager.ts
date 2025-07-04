@@ -161,9 +161,28 @@ export class BallManager {
             let offsetY = 0;
             const shakeEndTime = this.shakingSinks.get(i);
             if (shakeEndTime && Date.now() < shakeEndTime) {
-                const shakeIntensity = (shakeEndTime - Date.now()) / 200; // Normalize to 0-1
-                offsetX = (Math.random() - 0.5) * 5 * shakeIntensity; // Random offset
-                offsetY = (Math.random() - 0.5) * 5 * shakeIntensity;
+                const elapsed = 200 - (shakeEndTime - Date.now()); // Time since hit started
+                const progress = elapsed / 200; // 0 to 1
+                
+                // Shake animation (existing)
+                const shakeIntensity = (shakeEndTime - Date.now()) / 200;
+                offsetX = (Math.random() - 0.5) * 5 * shakeIntensity;
+                
+                // Downward shift animation - quick down then back up
+                let shiftY = 0;
+                if (progress < 0.3) {
+                    // First 30% of animation - move down
+                    shiftY = (progress / 0.3) * 8; // Move down 8px
+                } else if (progress < 0.6) {
+                    // Next 30% - move back up
+                    const bounceProgress = (progress - 0.3) / 0.3;
+                    shiftY = 8 * (1 - bounceProgress);
+                } else {
+                    // Final 40% - continue shaking at normal position
+                    offsetY = (Math.random() - 0.5) * 3 * shakeIntensity;
+                }
+                
+                offsetY += shiftY;
             } else if (shakeEndTime) {
                 this.shakingSinks.delete(i); // Remove if shake is over
             }
