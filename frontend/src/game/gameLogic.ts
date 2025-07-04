@@ -1,3 +1,4 @@
+import axios from 'axios';
 import outcomesData from './outcomes.json';
 
 export const MULTIPLIERS: {[key: number]: number} = {
@@ -29,33 +30,79 @@ export interface GameResult {
 }
 
 export const playGame = async (): Promise<GameResult> => {
-    console.log("Starting game...");
+    // Always use the real API - no fallback for the main game
+    const apiUrl = window.location.protocol === 'https:' 
+        ? 'https://api.allorigins.win/get?url=' + encodeURIComponent('http://4.237.228.146:7575/api/Plinko/play')
+        : 'http://4.237.228.146:7575/api/Plinko/play';
     
-    // Always use fallback for now since proxies are unreliable
-    const fallbackMultipliers = [0.5, 1, 1.1, 1.2, 1.4, 2, 9, 16];
-    const randomMultiplier = fallbackMultipliers[Math.floor(Math.random() * fallbackMultipliers.length)];
+    let externalApiResponse;
     
-    let matchingIndices: number[] = [];
+    if (window.location.protocol === 'https:') {
+        // Use AllOrigins proxy for HTTPS
+        const response = await axios.post(apiUrl, {
+            method: 'POST',
+            headers: {
+                'accept': 'text/plain',
+                'X-API-Key': '1234',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: "GabyPlinkoMaster",
+                amount: 1,
+                rows: 16,
+                risk: "Low",
+                currency: "USDT"
+            })
+        });
+        
+        externalApiResponse = { data: JSON.parse(response.data.contents) };
+    } else {
+        // Direct call for local development
+        externalApiResponse = await axios.post(apiUrl, {
+            userId: "GabyPlinkoMaster",
+            amount: 1,
+            rows: 16,
+            risk: "Low",
+            currency: "USDT"
+        }, {
+            headers: {
+                'accept': 'text/plain',
+                'X-API-Key': '1234',
+                'Content-Type': 'application/json'
+            }
+        });
+    }
+
+    const { multiplier, plinkoResult } = externalApiResponse.data.data;
+    console.log("External API plinkoResult:", plinkoResult);
+    console.log("External API multiplier:", multiplier);
+
+    let matchingOutcomeIndices: number[] = [];
     for (const key in MULTIPLIERS) {
-        if (MULTIPLIERS[key] === randomMultiplier) {
-            matchingIndices.push(parseInt(key));
+        if (MULTIPLIERS[key] === multiplier) {
+            matchingOutcomeIndices.push(parseInt(key));
         }
     }
-    
-    const outcomeIndex = matchingIndices[Math.floor(Math.random() * matchingIndices.length)];
-    const possibleOutcomes = outcomes[outcomeIndex.toString()];
-    
-    if (possibleOutcomes && possibleOutcomes.length > 0) {
-        const startX = possibleOutcomes[Math.floor(Math.random() * possibleOutcomes.length)];
-        const randomPattern = Array(16).fill(0).map(() => Math.random() > 0.5 ? 'R' : 'L');
-        
-        console.log("Generated game result:", { multiplier: randomMultiplier, startX });
-        return {
-            point: startX,
-            multiplier: randomMultiplier,
-            pattern: randomPattern
-        };
+
+    if (matchingOutcomeIndices.length === 0) {
+        console.error("Could not find matching outcome for multiplier:", multiplier);
+        throw new Error("Could not find matching outcome for multiplier.");
     }
-    
-    throw new Error("Failed to generate game result.");
+
+    const outcomeIndex = matchingOutcomeIndices[Math.floor(Math.random() * matchingOutcomeIndices.length)];
+    const possibleOutcomes = outcomes[outcomeIndex.toString()];
+
+    if (!possibleOutcomes || possibleOutcomes.length === 0) {
+        console.error("No possible outcomes for multiplier:", multiplier);
+        throw new Error("No possible outcomes for the determined multiplier.");
+    }
+
+    const transformedPattern = plinkoResult.map((val: number) => val === 0 ? 'L' : 'R');
+    const startX = possibleOutcomes[Math.floor(Math.random() * possibleOutcomes.length)];
+
+    return {
+        point: startX,
+        multiplier,
+        pattern: transformedPattern
+    };
 };
