@@ -1,4 +1,3 @@
-import axios from 'axios';
 import outcomesData from './outcomes.json';
 
 export const MULTIPLIERS: {[key: number]: number} = {
