@@ -51,8 +51,8 @@ export class BallManager {
             x,
             y,
             startTime: Date.now(),
-            duration: 500, // 400-600ms as specified
-            maxRadius: 45, // 40-50px as specified
+            duration: 800, // milliseconds - slower expansion
+            maxRadius: 15, // smaller radius
         });
     }
 
@@ -63,29 +63,19 @@ export class BallManager {
             const progress = elapsed / ripple.duration;
 
             if (progress < 1) {
-                // Ease-out animation for smooth expansion
+                // Ease-out function for smoother animation
                 const easedProgress = 1 - Math.pow(1 - progress, 3);
+                const currentRadius = ripple.maxRadius * easedProgress;
                 
-                // Start from 0-4px radius, expand to maxRadius
-                const startRadius = 2;
-                const currentRadius = startRadius + (ripple.maxRadius - startRadius) * easedProgress;
-                
-                // Fade from 0.5 to 0.0 as specified
-                const opacity = 0.5 * (1 - progress);
-
-                // Add soft glow effect
-                this.ctx.save();
-                this.ctx.shadowColor = 'rgba(173, 216, 230, 0.3)';
-                this.ctx.shadowBlur = 4;
+                // Smoother opacity fade with ease-in
+                const opacity = Math.pow(1 - progress, 2) * 0.6; // Max opacity 0.6 instead of 1
 
                 this.ctx.beginPath();
                 this.ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
-                this.ctx.strokeStyle = `rgba(173, 216, 230, ${opacity})`;
+                this.ctx.strokeStyle = `rgba(173, 216, 230, ${opacity})`; // Light blue ripple
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
                 this.ctx.closePath();
-
-                this.ctx.restore();
                 return true;
             }
             return false;
