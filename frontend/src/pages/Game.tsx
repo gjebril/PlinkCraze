@@ -3,16 +3,30 @@ import { useEffect, useRef, useState } from "react";
 import { BallManager } from "../game/classes/BallManager";
 import { playGame } from "../game/gameLogic";
 
+interface MultiplierResult {
+  multiplier: number;
+  color: string;
+}
+
 export function Game() {
   const [ballManager, setBallManager] = useState<BallManager>();
   const canvasRef = useRef<any>();
+  const [lastMultipliers, setLastMultipliers] = useState<MultiplierResult[]>([]);
 
   useEffect(() => {
     if (canvasRef.current) {
       const ballManager = new BallManager(
         canvasRef.current as unknown as HTMLCanvasElement,
-        (_index, _startX, _multiplier, _color) => {
-          // Minimal UI - no multiplier display needed
+        (_index, _startX, multiplier, color) => {
+          if (multiplier !== undefined && color !== undefined) {
+            setLastMultipliers((prevMultipliers) => {
+              const newMultipliers = [...prevMultipliers, { multiplier, color }];
+              if (newMultipliers.length > 8) {
+                return newMultipliers.slice(newMultipliers.length - 8);
+              }
+              return newMultipliers;
+            });
+          }
         }
       );
       setBallManager(ballManager);
@@ -48,13 +62,31 @@ export function Game() {
       </div>
 
       {/* Full Game Area */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 relative">
         <canvas 
           ref={canvasRef} 
           width="800" 
           height="800" 
           className="w-full h-full max-w-[90vmin] max-h-[90vmin] rounded-lg shadow-2xl"
         />
+        
+        {/* Rolling Multiplier Display - Top Right */}
+        <div className="absolute top-6 right-6 flex flex-col space-y-2">
+          {lastMultipliers.map((result, index) => (
+            <div
+              key={index}
+              className="px-3 py-1 rounded-full text-sm font-bold min-w-[50px] text-center shadow-lg"
+              style={{
+                backgroundColor: result.color,
+                opacity: (index + 1) / lastMultipliers.length,
+                color: result.multiplier === 16 ? 'white' : 'black',
+                fontFamily: 'Inter, sans-serif'
+              }}
+            >
+              {result.multiplier}x
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
