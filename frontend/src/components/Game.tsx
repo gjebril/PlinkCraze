@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { BallManager } from "../game/classes/BallManager";
-import axios from "axios";
+import { playGame } from "../game/gameLogic";
 
 
 export function Game() {
@@ -19,9 +19,9 @@ export function Game() {
         <div>
             <canvas ref={canvasRef} width="800" height="800"></canvas>
             <button onClick={async() => {
-                const response = await axios.post("http://localhost:3000/game", {data: 1});
+                const response = await playGame();
                 if (ballManager) {
-                    ballManager.addBall(response.data.point);
+                    ballManager.addBall(response.point);
                 }
             }}>Add ball</button>
         </div>

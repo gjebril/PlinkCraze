@@ -1,4 +1,4 @@
-import { HEIGHT, WIDTH, ballRadius, obstacleRadius, sinkWidth } from "../constants";
+import { HEIGHT, WIDTH, ballRadius, obstacleRadius } from "../constants";
 import { Obstacle, Sink, createObstacles, createSinks } from "../objects";
 import { pad, unpad } from "../padding";
 import { Ball } from "./Ball";
@@ -51,8 +51,8 @@ export class BallManager {
             x,
             y,
             startTime: Date.now(),
-            duration: 500, // milliseconds
-            maxRadius: 20,
+            duration: 800, // milliseconds - slower expansion
+            maxRadius: 15, // smaller radius
         });
     }
 
@@ -63,13 +63,17 @@ export class BallManager {
             const progress = elapsed / ripple.duration;
 
             if (progress < 1) {
-                const currentRadius = ripple.maxRadius * progress;
-                const opacity = 1 - progress;
+                // Ease-out function for smoother animation
+                const easedProgress = 1 - Math.pow(1 - progress, 3);
+                const currentRadius = ripple.maxRadius * easedProgress;
+                
+                // Smoother opacity fade with ease-in
+                const opacity = Math.pow(1 - progress, 2) * 0.6; // Max opacity 0.6 instead of 1
 
                 this.ctx.beginPath();
                 this.ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
                 this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                this.ctx.lineWidth = 2;
+                this.ctx.lineWidth = 1.5; // Thinner line
                 this.ctx.stroke();
                 this.ctx.closePath();
                 return true;
