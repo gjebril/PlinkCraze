@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { BallManager } from "../game/classes/BallManager";
 import { WIDTH } from "../game/constants";
 import { pad } from "../game/padding";
-import axios from "axios";
-import { baseURL } from "../utils";
+import { MULTIPLIERS } from "../game/gameLogic";
 
 export function Simulation() {
   const canvasRef = useRef<any>();
@@ -11,8 +10,27 @@ export function Simulation() {
 
   const saveSimulationData = async () => {
     try {
-      await axios.post(`${baseURL}/save-simulation-data`, { data: outputs });
-      alert("Simulation data saved successfully!");
+      // Group startX values by bin (outcome index)
+      const outcomesByBin: {[key: string]: number[]} = {};
+      
+      // Initialize empty arrays for all bins
+      for (let i = 0; i <= 16; i++) {
+        outcomesByBin[i.toString()] = [];
+      }
+      
+      // Group the startX values by bin
+      outputs.forEach(output => {
+        outcomesByBin[output.bin.toString()].push(output.startX);
+      });
+      
+      const blob = new Blob([JSON.stringify(outcomesByBin, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `new-outcomes-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      alert("Outcomes data saved successfully!");
     } catch (error) {
       console.error("Error saving simulation data:", error);
       alert("Failed to save simulation data.");
@@ -26,30 +44,11 @@ export function Simulation() {
         (index: number, startX?: number) => {
           // This is where we get the final sink index and the startX
           // We need to map the index to a multiplier
-          const MULTIPLIERS: { [key: number]: number } = {
-            0: 16,
-            1: 9,
-            2: 2,
-            3: 1.4,
-            4: 1.4,
-            5: 1.2,
-            6: 1.1,
-            7: 1,
-            8: 0.5,
-            9: 1,
-            10: 1.1,
-            11: 1.2,
-            12: 1.4,
-            13: 1.4,
-            14: 2,
-            15: 9,
-            16: 16,
-          };
           const multiplier = MULTIPLIERS[index];
           if (startX !== undefined && multiplier !== undefined) {
             setOutputs((prevOutputs) => [
               ...prevOutputs,
-              { startX: unpad(startX), multiplier, bin: index },
+              { startX: startX, multiplier, bin: index },
             ]);
           }
         }
@@ -87,7 +86,7 @@ export function Simulation() {
         <div className="bg-dark-blue-secondary p-4 rounded-lg overflow-auto h-96">
           {outputs.map((output, index) => (
             <p key={index} className="text-sm">
-              StartX: {output.startX.toFixed(2)}, Multiplier: {output.multiplier}, Bin: {output.bin}
+              StartX: {output.startX}, Multiplier: {output.multiplier}, Bin: {output.bin}
             </p>
           ))}
         </div>
@@ -99,6 +98,3 @@ export function Simulation() {
   );
 }
 
-function unpad(value: number): number {
-  return value / 10000;
-}

@@ -1,9 +1,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BallManager } from "../game/classes/BallManager";
-import axios from "axios";
 import { Button } from "../components/ui";
-import { baseURL } from "../utils";
+import { playGame } from "../game/gameLogic";
 
 interface MultiplierResult {
   multiplier: number;
@@ -19,7 +18,7 @@ export function Game() {
     if (canvasRef.current) {
       const ballManager = new BallManager(
         canvasRef.current as unknown as HTMLCanvasElement,
-        (index, startX, multiplier, color) => {
+        (_index, _startX, multiplier, color) => {
           if (multiplier !== undefined && color !== undefined) {
             setLastMultipliers((prevMultipliers) => {
               const newMultipliers = [...prevMultipliers, { multiplier, color }];
@@ -42,11 +41,9 @@ export function Game() {
           <Button
             className="w-full bg-highlight-green text-black font-bold py-4 rounded-lg"
             onClick={async () => {
-              const response = await axios.post(`${baseURL}/game`, {
-                data: 1,
-              });
+              const response = await playGame();
               if (ballManager) {
-                ballManager.addBall(response.data.point);
+                ballManager.addBall(response.point);
               }
             }}
           >
