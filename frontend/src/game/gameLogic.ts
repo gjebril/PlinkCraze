@@ -30,93 +30,33 @@ export interface GameResult {
 }
 
 export const playGame = async (): Promise<GameResult> => {
-    try {
-        // Use different API URL based on environment
-        const apiUrl = window.location.protocol === 'https:' 
-            ? 'https://cors-anywhere.herokuapp.com/http://4.237.228.146:7575/api/Plinko/play'
-            : 'http://4.237.228.146:7575/api/Plinko/play';
-            
-        const externalApiResponse = await axios.post(apiUrl, {
-            userId: "GabyPlinkoMaster",
-            amount: 1,
-            rows: 16,
-            risk: "Low",
-            currency: "USDT"
-        }, {
-            headers: {
-                'accept': 'text/plain',
-                'X-API-Key': '1234',
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const { multiplier, plinkoResult } = externalApiResponse.data.data;
-        console.log("External API plinkoResult:", plinkoResult);
-        console.log("External API multiplier:", multiplier);
-
-        let matchingOutcomeIndices: number[] = [];
-        for (const key in MULTIPLIERS) {
-            if (MULTIPLIERS[key] === multiplier) {
-                matchingOutcomeIndices.push(parseInt(key));
-            }
+    console.log("Starting game...");
+    
+    // Always use fallback for now since proxies are unreliable
+    const fallbackMultipliers = [0.5, 1, 1.1, 1.2, 1.4, 2, 9, 16];
+    const randomMultiplier = fallbackMultipliers[Math.floor(Math.random() * fallbackMultipliers.length)];
+    
+    let matchingIndices: number[] = [];
+    for (const key in MULTIPLIERS) {
+        if (MULTIPLIERS[key] === randomMultiplier) {
+            matchingIndices.push(parseInt(key));
         }
-
-        if (matchingOutcomeIndices.length === 0) {
-            console.error("Could not find matching outcome for multiplier:", multiplier);
-            throw new Error("Could not find matching outcome for multiplier.");
-        }
-
-        const outcomeIndex = matchingOutcomeIndices[Math.floor(Math.random() * matchingOutcomeIndices.length)];
-
-        const possibleOutcomes = outcomes[outcomeIndex.toString()];
-        console.log("Raw possible outcomes for multiplier", multiplier, "(outcomeIndex", outcomeIndex, "):", possibleOutcomes);
-
-        if (!possibleOutcomes || possibleOutcomes.length === 0) {
-            console.error("No possible outcomes for multiplier:", multiplier);
-            throw new Error("No possible outcomes for the determined multiplier.");
-        }
-
-        const transformedPattern = plinkoResult.map((val: number) => val === 0 ? 'L' : 'R');
-        console.log("Transformed Plinko Pattern:", transformedPattern);
-
+    }
+    
+    const outcomeIndex = matchingIndices[Math.floor(Math.random() * matchingIndices.length)];
+    const possibleOutcomes = outcomes[outcomeIndex.toString()];
+    
+    if (possibleOutcomes && possibleOutcomes.length > 0) {
         const startX = possibleOutcomes[Math.floor(Math.random() * possibleOutcomes.length)];
-        console.log("Chosen startX:", startX);
-
+        const randomPattern = Array(16).fill(0).map(() => Math.random() > 0.5 ? 'R' : 'L');
+        
+        console.log("Generated game result:", { multiplier: randomMultiplier, startX });
         return {
             point: startX,
-            multiplier,
-            pattern: transformedPattern
+            multiplier: randomMultiplier,
+            pattern: randomPattern
         };
-
-    } catch (error: any) {
-        console.error("Error calling external API:", error.response?.data || error.message);
-        
-        // Fallback: generate random game result
-        const fallbackMultipliers = [0.5, 1, 1.1, 1.2, 1.4, 2, 9, 16];
-        const randomMultiplier = fallbackMultipliers[Math.floor(Math.random() * fallbackMultipliers.length)];
-        
-        let matchingIndices: number[] = [];
-        for (const key in MULTIPLIERS) {
-            if (MULTIPLIERS[key] === randomMultiplier) {
-                matchingIndices.push(parseInt(key));
-            }
-        }
-        
-        const outcomeIndex = matchingIndices[Math.floor(Math.random() * matchingIndices.length)];
-        const possibleOutcomes = outcomes[outcomeIndex.toString()];
-        
-        if (possibleOutcomes && possibleOutcomes.length > 0) {
-            const startX = possibleOutcomes[Math.floor(Math.random() * possibleOutcomes.length)];
-            const randomPattern = Array(16).fill(0).map(() => Math.random() > 0.5 ? 'R' : 'L');
-            
-            console.log("Using fallback game result");
-            return {
-                point: startX,
-                multiplier: randomMultiplier,
-                pattern: randomPattern
-            };
-        }
-        
-        throw new Error("Failed to play game via external API.");
     }
+    
+    throw new Error("Failed to generate game result.");
 };
