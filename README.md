@@ -1,130 +1,112 @@
 # PlinkCraze
 
-A web-based Plinko game simulation built with React and TypeScript. The game features a realistic ball physics simulation and integrates with an external Plinko API for authentic gameplay mechanics.
+A web-based Plinko game. The frontend is built with **React + TypeScript** and renders the
+board with **Phaser 3**; the **Express** backend returns predetermined ("imitation") outcomes
+that the board then animates deterministically.
 
-## Features
+## How the game works
 
-- **Interactive Plinko Game**: Visual ball drop simulation with physics-based movement
-- **Real-time Multipliers**: Dynamic payout calculations based on ball landing positions
-- **External API Integration**: Connects to external Plinko service for game results
-- **Responsive Design**: Built with React and Tailwind CSS for modern UI
-- **Game Simulation**: Separate simulation mode for testing game mechanics
+PlinkCraze is **outcome-driven**, not free-physics:
 
-## Project Structure
+1. The frontend calls the external Plinko API (via `playGame`) and receives a `multiplier`.
+2. It looks up a **start X position** from `outcomes.json` that is known to land in the sink for
+   that multiplier under the game's physics.
+3. The Phaser scene drops a ball from that start position. The physics is **deterministic** —
+   given the start X it always lands in the predetermined sink. The visible "physics" is a
+   faithful replay of the server result, not a fair random drop.
+
+> ⚠️ The ball physics in `frontend/src/game/plinko/game/physics.ts` and the board geometry in
+> `objects.ts`/`constants.ts` are tuned to match `outcomes.json`. **Do not change the gravity,
+> friction, peg layout, or sink layout** without regenerating `outcomes.json`, or balls will
+> land in the wrong sinks.
+
+## Project structure
 
 ```
 PlinkCraze/
-├── frontend/           # React TypeScript frontend
-│   ├── src/
-│   │   ├── components/ # Reusable UI components
-│   │   ├── pages/      # Main application pages
-│   │   ├── game/       # Game logic and physics
-│   │   └── utils/      # Helper functions
-│   └── dist/          # Production build
-├── backend/           # Express.js backend API
-│   ├── src/
-│   │   ├── index.ts   # Main server file
-│   │   └── outcomes.ts # Game outcome configurations
-│   └── dist-exec/     # Compiled executable
-└── version-1/         # Legacy version
+├── frontend/                     # React + TypeScript + Vite + Phaser
+│   └── src/
+│       ├── App.tsx               # Renders <PlinkoWrapper/>
+│       └── game/
+│           ├── gameLogic.ts      # Backend/imitation API client (playGame)
+│           ├── outcomes.json     # Predetermined start positions per multiplier
+│           └── plinko/           # The game feature (mirrors our Dice game's layout)
+│               ├── index.ts            # Barrel exports
+│               ├── PlinkoWrapper.tsx   # Integration layer (API/balance/auth seam)
+│               ├── Plinko.tsx          # Orchestrator: bet state, history, wiring
+│               ├── components/
+│               │   ├── GameDisplay.tsx        # React ↔ Phaser bridge
+│               │   ├── GameBottomControls.tsx # BET button + amount
+│               │   └── HistoryDisplay.tsx     # Recent multipliers
+│               ├── game/
+│               │   ├── game.ts        # PlinkoScene (Phaser) + createPlinkoGame() handle
+│               │   ├── physics.ts     # Headless ball physics
+│               │   ├── objects.ts     # Peg/sink geometry
+│               │   ├── constants.ts   # Dimensions, physics, colors, multipliers
+│               │   └── padding.ts     # Fixed-point helpers
+│               ├── hooks/
+│               │   ├── useBetting.ts      # Bet → API → drop
+│               │   ├── useGameHistory.ts  # Rolling multiplier history
+│               │   └── types.ts
+│               └── utils.ts            # Multiplier → color gradient
+└── backend/                      # Express API (unchanged)
+    └── src/
+        ├── index.ts              # Server + outcome selection
+        └── outcomes.ts           # Outcome data
 ```
 
-## Technology Stack
+### Architecture notes (for the games team)
 
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **React Router** - Navigation
-- **Axios** - HTTP client
+- **Phaser behind a plain handle.** `createPlinkoGame(config, viewMode)` returns
+  `{ drop, setCallbacks, setMuted, isReady, destroy }`. React never touches a raw Phaser object.
+- **Wrapper vs. orchestrator split.** `PlinkoWrapper` is the seam for platform concerns
+  (balance, auth, currency, bet validation) — currently it just forwards to `playGame`.
+  `Plinko` owns gameplay state and knows nothing about how results are fetched.
+- **`GameDisplay` is the bridge.** It creates/destroys the Phaser game in a div and forwards
+  scene callbacks through refs so prop changes never re-initialise the game.
+- This layout intentionally mirrors our Dice in-house game so it can later be ported into the
+  platform monorepo with minimal reshaping.
 
-### Backend
-- **Express.js** - Web framework
-- **TypeScript** - Type safety
-- **CORS** - Cross-origin resource sharing
-- **Axios** - External API calls
+## Technology stack
 
-## Installation
+- **Frontend**: React 18, TypeScript, Vite, Phaser 3, Tailwind CSS, Axios
+- **Backend**: Express, TypeScript, CORS, Axios
 
-1. Clone the repository:
+## Getting started
+
+Install dependencies:
+
 ```bash
-git clone <repository-url>
-cd PlinkCraze
+cd frontend && npm install
+cd ../backend && npm install
 ```
 
-2. Install frontend dependencies:
+Run the frontend (dev):
+
 ```bash
-cd frontend
-npm install
+cd frontend && npm run dev      # http://localhost:5173
 ```
 
-3. Install backend dependencies:
+Run the backend:
+
 ```bash
-cd ../backend
-npm install
+cd backend && npm run build && npm start   # http://localhost:3000
 ```
 
-## Development
+Production build:
 
-### Frontend Development
 ```bash
-cd frontend
-npm run dev
-```
-The frontend will be available at `http://localhost:5173`
-
-### Backend Development
-```bash
-cd backend
-npm run build
-npm start
-```
-The backend API will be available at `http://localhost:3000`
-
-## Production Build
-
-### Frontend
-```bash
-cd frontend
-npm run build
+cd frontend && npm run build    # outputs to frontend/dist
 ```
 
-### Backend
-```bash
-cd backend
-npm run build
-npm run package  # Creates executable in dist-exec/
-```
+## API integration
 
-## API Integration
+The game calls an external Plinko API (configured in `frontend/src/game/gameLogic.ts`):
 
-The game integrates with an external Plinko API:
-- **Endpoint**: `http://4.237.228.146:7575/api/Plinko/play`
-- **Method**: POST
-- **Headers**: 
-  - `X-API-Key: 1234`
-  - `Content-Type: application/json`
-
-### Game Configuration
-- **Rows**: 16
-- **Risk Level**: Low
-- **Currency**: USDT
-- **Multipliers**: Range from 0.5x to 16x based on landing position
-
-## Game Mechanics
-
-1. **Ball Physics**: Realistic ball movement simulation using custom physics engine
-2. **Outcome Calculation**: External API determines multiplier and path
-3. **Visual Feedback**: Animated ball drop with real-time position updates
-4. **Payout System**: Multipliers range from 0.5x to 16x based on final position
-
-## Routes
-
-- `/` - Home page (redirects to game)
-- `/game` - Main Plinko game interface
-- `/simulation` - Game simulation and testing mode
+- **Endpoint**: `POST http://4.237.228.146:7575/api/Plinko/play`
+- **Headers**: `X-API-Key: 1234`, `Content-Type: application/json`
+- **Config**: 16 rows, Low risk, USDT — multipliers range 0.5x → 16x
 
 ## License
 
-ISC# PlinkCraze
+ISC

@@ -49,7 +49,7 @@ export const playGame = async (): Promise<GameResult> => {
         console.log("External API plinkoResult:", plinkoResult);
         console.log("External API multiplier:", multiplier);
 
-        let matchingOutcomeIndices: number[] = [];
+        const matchingOutcomeIndices: number[] = [];
         for (const key in MULTIPLIERS) {
             if (MULTIPLIERS[key] === multiplier) {
                 matchingOutcomeIndices.push(parseInt(key));
@@ -83,8 +83,9 @@ export const playGame = async (): Promise<GameResult> => {
             pattern: transformedPattern
         };
 
-    } catch (error: any) {
-        console.error("Error calling external API:", error.response?.data || error.message);
+    } catch (error) {
+        const details = axios.isAxiosError(error) ? (error.response?.data ?? error.message) : error;
+        console.error("Error calling external API:", details);
         throw new Error("Failed to play game via external API.");
     }
 };
