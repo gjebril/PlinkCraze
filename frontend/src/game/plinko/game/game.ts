@@ -1,7 +1,17 @@
 import Phaser from 'phaser';
 import {
+  BALL_DRAW_RADIUS,
+  BIN_BOTTOM_EDGE,
+  BIN_CORNER_RADIUS,
+  BIN_HEIGHT,
+  BIN_LABEL_FONT,
+  BIN_LABEL_FONT_MOBILE,
+  BIN_ROW_Y,
+  BIN_TEXT_COLOR,
+  BIN_WIDTH,
   COLORS,
   HEIGHT,
+  PEG_DRAW_RADIUS,
   PlinkoViewMode,
   RIPPLE_DURATION,
   RIPPLE_MAX_RADIUS,
@@ -9,12 +19,11 @@ import {
   SINK_SHAKE_INTENSITY,
   WIDTH,
   ballRadius,
-  obstacleRadius,
 } from './constants';
-import { Obstacle, Sink, createObstacles, createSinks } from './objects';
+import { Obstacle, Sink, binCenterX, createObstacles, createSinks } from './objects';
 import { BallBody } from './physics';
 import { pad, unpad } from './padding';
-import { getMultiplierColor } from '../utils';
+import { formatMultiplier, getBinColor } from '../utils';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 export interface PlinkoResult {
@@ -26,8 +35,12 @@ export interface PlinkoResult {
 
 export interface PlinkoGameCallbacks {
   onGameReady?: () => void;
-  /** Fired the moment a ball settles into a sink. */
-  onBallLanded?: (sinkIndex: number, multiplier: number) => void;
+  /**
+   * Fired the moment a ball settles into a sink.
+   * `startX` is the (padded) start position that produced this landing —
+   * used by the simulation tool to regenerate the outcome table.
+   */
+  onBallLanded?: (sinkIndex: number, multiplier: number, startX: number) => void;
 }
 
 /** Plain handle the React layer talks to — never a raw Phaser object. */
@@ -45,9 +58,6 @@ interface Ripple {
   startTime: number;
 }
 
-const SINK_GAP = obstacleRadius * 2;
-const SINK_CORNER_RADIUS = 5;
-
 // ── Scene ───────────────────────────────────────────────────────────────────
 class PlinkoScene extends Phaser.Scene {
   private obstacles: Obstacle[] = [];
@@ -63,13 +73,20 @@ class PlinkoScene extends Phaser.Scene {
   private callbacks: PlinkoGameCallbacks = {};
   private ready = false;
   private readonly viewMode: PlinkoViewMode;
+  private readonly dpr: number;
 
-  constructor(viewMode: PlinkoViewMode = 'normal') {
+  constructor(viewMode: PlinkoViewMode = 'normal', dpr = 1) {
     super({ key: 'PlinkoScene' });
     this.viewMode = viewMode;
+    this.dpr = dpr;
   }
 
   create(): void {
+    // The world is authored at WIDTH×HEIGHT; render it at device-pixel
+    // resolution (zoom = dpr) so the board stays crisp on hi-DPI screens.
+    this.cameras.main.setZoom(this.dpr);
+    this.cameras.main.centerOn(WIDTH / 2, HEIGHT / 2);
+
     this.obstacles = createObstacles();
     this.sinks = createSinks();
 
@@ -81,6 +98,17 @@ class PlinkoScene extends Phaser.Scene {
 
     this.ready = true;
     this.callbacks.onGameReady?.();
+
+    // If Poppins finishes loading after the labels were rasterised, re-apply
+    // the font so they pick it up (never blocks game start).
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      const font = this.viewMode === 'mobile' ? BIN_LABEL_FONT_MOBILE : BIN_LABEL_FONT;
+      document.fonts.ready
+        .then(() => this.sinkLabels.forEach((label) => label.setFont(font)))
+        .catch(() => {
+          /* ignore — fallback font is fine */
+        });
+    }
   }
 
   update(): void {
@@ -107,16 +135,16 @@ class PlinkoScene extends Phaser.Scene {
       ballRadius,
       this.obstacles,
       this.sinks,
-      (index) => this.handleBallLanded(index),
+      (index) => this.handleBallLanded(index, startX),
       (x, y) => this.addRipple(x, y),
     );
     this.balls.push(ball);
   }
 
-  private handleBallLanded(index: number): void {
+  private handleBallLanded(index: number, startX: number): void {
     const sink = this.sinks[index];
     this.shakingSinks.set(index, this.time.now + SINK_SHAKE_DURATION);
-    this.callbacks.onBallLanded?.(index, sink?.multiplier ?? 0);
+    this.callbacks.onBallLanded?.(index, sink?.multiplier ?? 0, startX);
   }
 
   // ── Drawing ─────────────────────────────────────────────────────────────────
@@ -124,29 +152,25 @@ class PlinkoScene extends Phaser.Scene {
     this.pegGfx.clear();
     this.pegGfx.fillStyle(COLORS.OBSTACLE, 1);
     this.obstacles.forEach((o) => {
-      this.pegGfx.fillCircle(unpad(o.x), unpad(o.y), o.radius);
+      this.pegGfx.fillCircle(unpad(o.x), unpad(o.y), PEG_DRAW_RADIUS);
     });
   }
 
   private createSinkLabels(): void {
-    const fontSize = this.viewMode === 'mobile' ? '12px' : '14px';
+    const font = this.viewMode === 'mobile' ? BIN_LABEL_FONT_MOBILE : BIN_LABEL_FONT;
     this.sinks.forEach((sink) => {
-      const { text } = getMultiplierColor(sink.multiplier);
       const label = this.add
-        .text(0, 0, `${sink.multiplier}x`, {
-          fontFamily: 'Arial, sans-serif',
-          fontSize,
-          fontStyle: 'bold',
-          color: text,
-        })
-        .setOrigin(0.5);
+        .text(0, 0, formatMultiplier(sink.multiplier), { font, color: BIN_TEXT_COLOR })
+        .setOrigin(0.5)
+        .setResolution(this.dpr);
       this.sinkLabels.push(label);
     });
   }
 
+  // Bins are positioned from the peg coordinate system (gap midpoints) so they
+  // can never drift out of alignment with the pyramid.
   private drawSinks(): void {
     for (let i = 0; i < this.sinks.length; i++) {
-      const sink = this.sinks[i];
       let offsetX = 0;
       let offsetY = 0;
 
@@ -159,20 +183,19 @@ class PlinkoScene extends Phaser.Scene {
         this.shakingSinks.delete(i);
       }
 
-      const { fill } = getMultiplierColor(sink.multiplier);
-      const x = sink.x - SINK_GAP / 2 + offsetX;
-      const y = sink.y - sink.height / 2 + offsetY;
-      const width = sink.width - SINK_GAP / 4;
-      const height = sink.height;
+      const { fill, darkFill } = getBinColor(i);
+      const x = binCenterX(i) - BIN_WIDTH / 2 + offsetX;
+      const y = BIN_ROW_Y - BIN_HEIGHT / 2 + offsetY;
 
+      // Darker slab underneath, then the main face 3px shorter → bottom lip.
+      this.dynamicGfx.fillStyle(darkFill, 1);
+      this.dynamicGfx.fillRoundedRect(x, y, BIN_WIDTH, BIN_HEIGHT, BIN_CORNER_RADIUS);
       this.dynamicGfx.fillStyle(fill, 1);
-      this.dynamicGfx.fillRoundedRect(x, y, width, height, SINK_CORNER_RADIUS);
-      this.dynamicGfx.lineStyle(1, COLORS.SINK_BORDER, 0.2);
-      this.dynamicGfx.strokeRoundedRect(x, y, width, height, SINK_CORNER_RADIUS);
+      this.dynamicGfx.fillRoundedRect(x, y, BIN_WIDTH, BIN_HEIGHT - BIN_BOTTOM_EDGE, BIN_CORNER_RADIUS);
 
       const label = this.sinkLabels[i];
       if (label) {
-        label.setPosition(x + width / 2, y + height / 2);
+        label.setPosition(x + BIN_WIDTH / 2, y + (BIN_HEIGHT - BIN_BOTTOM_EDGE) / 2);
       }
     }
   }
@@ -201,8 +224,8 @@ class PlinkoScene extends Phaser.Scene {
     this.balls = this.balls.filter((ball) => {
       ball.update();
 
-      this.dynamicGfx.fillStyle(COLORS.BALL_CENTER, 1);
-      this.dynamicGfx.fillCircle(ball.screenX, ball.screenY, ball.radius);
+      this.dynamicGfx.fillStyle(COLORS.BALL_FILL, 1);
+      this.dynamicGfx.fillCircle(ball.screenX, ball.screenY, BALL_DRAW_RADIUS);
 
       // Drop settled balls one frame after they land so the final
       // resting frame is still drawn.
@@ -216,20 +239,22 @@ export const createPlinkoGame = (
   config: Phaser.Types.Core.GameConfig,
   viewMode: PlinkoViewMode = 'normal',
 ): PlinkoGame => {
-  const scene = new PlinkoScene(viewMode);
+  // Cap at 2× so 3×/4× displays don't create an enormous backing canvas.
+  const dpr = Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2);
+  const scene = new PlinkoScene(viewMode, dpr);
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,
-    width: WIDTH,
-    height: HEIGHT,
+    width: WIDTH * dpr,
+    height: HEIGHT * dpr,
     backgroundColor: COLORS.BACKGROUND,
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: WIDTH,
-      height: HEIGHT,
+      width: WIDTH * dpr,
+      height: HEIGHT * dpr,
     },
-    render: { antialias: true },
+    render: { antialias: true, roundPixels: false },
     scene,
     ...config,
   });

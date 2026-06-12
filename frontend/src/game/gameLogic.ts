@@ -29,23 +29,46 @@ export interface GameResult {
     pattern: string[];
 }
 
+// External Plinko API config.
+const API_BASE = 'http://4.237.228.146:7575/api';
+const USER_ID = 'GabyPlinkoMaster';
+const API_HEADERS = {
+    'accept': 'text/plain',
+    'X-API-Key': '1234',
+    'Content-Type': 'application/json',
+};
+
+const callPlay = () =>
+    axios.post(`${API_BASE}/Plinko/play`, {
+        userId: USER_ID,
+        amount: 1,
+        rows: 16,
+        risk: 'Low',
+        currency: 'USDT',
+    }, { headers: API_HEADERS });
+
+// The API requires an active provably-fair seed per user. A fresh user (or one
+// whose seed was revealed/rotated) returns errorType "NoActiveSeed"; this
+// creates the initial seed so play can proceed.
+const createInitialSeed = () =>
+    axios.post(`${API_BASE}/Seeds/CreateInitialGameSeed`, { userId: USER_ID }, { headers: API_HEADERS });
+
 export const playGame = async (): Promise<GameResult> => {
     try {
-        const externalApiResponse = await axios.post('http://4.237.228.146:7575/api/Plinko/play', {
-            userId: "GabyPlinkoMaster",
-            amount: 1,
-            rows: 16,
-            risk: "Low",
-            currency: "USDT"
-        }, {
-            headers: {
-                'accept': 'text/plain',
-                'X-API-Key': '1234',
-                'Content-Type': 'application/json'
-            }
-        });
+        let response = await callPlay();
 
-        const { multiplier, plinkoResult } = externalApiResponse.data.data;
+        // Self-heal: if there's no active seed, create one and retry once.
+        if (!response.data?.success && response.data?.errorType === 'NoActiveSeed') {
+            console.warn('No active seed for user — creating initial seed and retrying.');
+            await createInitialSeed();
+            response = await callPlay();
+        }
+
+        if (!response.data?.success || !response.data?.data) {
+            throw new Error(response.data?.message || 'Play request was not successful.');
+        }
+
+        const { multiplier, plinkoResult } = response.data.data;
         console.log("External API plinkoResult:", plinkoResult);
         console.log("External API multiplier:", multiplier);
 

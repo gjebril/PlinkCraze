@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { MultiplierResult } from './types';
 
-const HISTORY_LENGTH = 8;
+const HISTORY_LENGTH = 5;
 
 /** Keeps a rolling list of the most recent landed multipliers. */
 export function useGameHistory() {

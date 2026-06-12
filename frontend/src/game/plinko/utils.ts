@@ -1,41 +1,45 @@
-import { COLOR_STOPS } from './game/constants';
+import { BIN_COUNT, BIN_PALETTE } from './game/constants';
 
-export interface MultiplierColor {
-  /** Phaser-friendly numeric color, e.g. 0xff0000. */
-  fill: number;
-  /** CSS color string, e.g. 'rgb(255, 0, 0)'. */
+export interface BinColor {
+  /** CSS hex, e.g. '#FFAA3C'. */
   css: string;
-  /** Readable text color for labels drawn on top of `fill`. */
-  text: string;
+  /** Phaser numeric color, e.g. 0xffaa3c. */
+  fill: number;
+  /** ~25% darker variant for the bottom-edge slab. */
+  darkCss: string;
+  darkFill: number;
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
 }
 
 /**
- * Maps a payout multiplier to a color along the yellow → red gradient,
- * mirroring the original engine's `getColor`.
+ * Bin color by distance from the center bin (NOT by multiplier value), so the
+ * yellow-center → crimson-edge gradient holds for any row count.
  */
-export function getMultiplierColor(multiplier: number): MultiplierColor {
-  type Stop = (typeof COLOR_STOPS)[number];
-  let startColor: Stop = COLOR_STOPS[0];
-  let endColor: Stop = COLOR_STOPS[COLOR_STOPS.length - 1];
-
-  for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
-    if (multiplier >= COLOR_STOPS[i].value && multiplier <= COLOR_STOPS[i + 1].value) {
-      startColor = COLOR_STOPS[i];
-      endColor = COLOR_STOPS[i + 1];
-      break;
-    }
-  }
-
-  const range = endColor.value - startColor.value;
-  const progress = range === 0 ? 0 : (multiplier - startColor.value) / range;
-
-  const r = Math.round(startColor.color.r + (endColor.color.r - startColor.color.r) * progress);
-  const g = Math.round(startColor.color.g + (endColor.color.g - startColor.color.g) * progress);
-  const b = Math.round(startColor.color.b + (endColor.color.b - startColor.color.b) * progress);
+export function getBinColor(index: number, binCount: number = BIN_COUNT): BinColor {
+  const center = Math.floor(binCount / 2);
+  const distance = Math.min(Math.abs(index - center), BIN_PALETTE.length - 1);
+  const hex = BIN_PALETTE[distance];
+  const { r, g, b } = hexToRgb(hex);
+  const dr = Math.round(r * 0.75);
+  const dg = Math.round(g * 0.75);
+  const db = Math.round(b * 0.75);
 
   return {
+    css: hex,
     fill: (r << 16) | (g << 8) | b,
-    css: `rgb(${r}, ${g}, ${b})`,
-    text: multiplier === 16 ? '#ffffff' : '#000000',
+    darkCss: `rgb(${dr}, ${dg}, ${db})`,
+    darkFill: (dr << 16) | (dg << 8) | db,
   };
+}
+
+/**
+ * Multiplier label: always one decimal with an "x" suffix (7.0x, 4.7x, 0.4x),
+ * except values ≥ 1000 which render as a plain integer (e.g. "1000").
+ */
+export function formatMultiplier(multiplier: number): string {
+  return multiplier >= 1000 ? String(Math.round(multiplier)) : `${multiplier.toFixed(1)}x`;
 }

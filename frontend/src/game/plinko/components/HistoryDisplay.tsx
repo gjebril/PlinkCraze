@@ -1,25 +1,28 @@
 import { memo } from 'react';
+import { BIN_TEXT_COLOR } from '../game/constants';
 import type { MultiplierResult } from '../hooks/types';
+import { formatMultiplier } from '../utils';
 
 interface HistoryDisplayProps {
   history: MultiplierResult[];
 }
 
-/** Vertical stack of the most recent multipliers, oldest fading out. */
+/**
+ * Recent results as a single flush column (cards share edges, no gaps),
+ * newest on top, only the outer corners rounded.
+ */
 function HistoryDisplay({ history }: HistoryDisplayProps) {
+  const newestFirst = [...history].reverse();
+
   return (
-    <div className="flex flex-col space-y-2">
-      {history.map((result, index) => (
+    <div className="overflow-hidden rounded-md shadow-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      {newestFirst.map((result, index) => (
         <div
-          key={index}
-          className="min-w-[60px] rounded border border-black/20 px-4 py-2 text-center text-sm font-bold shadow-lg"
-          style={{
-            backgroundColor: result.color,
-            opacity: (index + 1) / history.length,
-            color: result.multiplier === 16 ? '#ffffff' : '#000000',
-          }}
+          key={`${result.multiplier}-${index}`}
+          className="flex h-[52px] w-[110px] items-center justify-center text-lg font-semibold"
+          style={{ backgroundColor: result.color, color: BIN_TEXT_COLOR }}
         >
-          {result.multiplier}x
+          {formatMultiplier(result.multiplier)}
         </div>
       ))}
     </div>

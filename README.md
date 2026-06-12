@@ -34,6 +34,7 @@ PlinkCraze/
 │               ├── index.ts            # Barrel exports
 │               ├── PlinkoWrapper.tsx   # Integration layer (API/balance/auth seam)
 │               ├── Plinko.tsx          # Orchestrator: bet state, history, wiring
+│               ├── Simulation.tsx      # Dev tool: regenerate outcomes.json
 │               ├── components/
 │               │   ├── GameDisplay.tsx        # React ↔ Phaser bridge
 │               │   ├── GameBottomControls.tsx # BET button + amount
@@ -66,6 +67,14 @@ PlinkCraze/
   scene callbacks through refs so prop changes never re-initialise the game.
 - This layout intentionally mirrors our Dice in-house game so it can later be ported into the
   platform monorepo with minimal reshaping.
+
+## Simulation tool
+
+A built-in dev tool regenerates `outcomes.json` if the board geometry or physics
+ever change. Open the app and click **"Simulation ↗"** (bottom-left), or go to
+`http://localhost:5173/#simulation`. Click **Start** to rain random balls, let it
+collect samples, then **Export JSON** to download a fresh, correctly-shaped
+outcome table (start positions grouped by sink index).
 
 ## Technology stack
 

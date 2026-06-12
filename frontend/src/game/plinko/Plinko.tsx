@@ -6,7 +6,7 @@ import HistoryDisplay from './components/HistoryDisplay';
 import type { PlinkoGame } from './game/game';
 import { useBetting } from './hooks/useBetting';
 import { useGameHistory } from './hooks/useGameHistory';
-import { getMultiplierColor } from './utils';
+import { getBinColor } from './utils';
 
 export interface PlinkoProps {
   /** Calls the backend imitation API and resolves the predetermined result. */
@@ -20,27 +20,24 @@ export interface PlinkoProps {
  */
 export default function Plinko({ onPlay }: PlinkoProps) {
   const gameRef = useRef<PlinkoGame | null>(null);
-  const [isGameInProgress, setIsGameInProgress] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const { history, addResult } = useGameHistory();
 
   const drop = useCallback((result: GameResult) => {
     gameRef.current?.drop(result);
   }, []);
 
-  const { bet, isLoading } = useBetting({ play: onPlay, drop });
+  const { bet } = useBetting({ play: onPlay, drop });
 
+  // Fire-and-forget: each click drops another ball; we never wait for a
+  // previous ball to reach a sink, so many balls can be in play at once.
   const handleBet = useCallback(() => {
-    setIsGameInProgress(true);
-    bet().catch((err) => {
-      console.error('Bet failed:', err);
-      setIsGameInProgress(false);
-    });
+    bet().catch((err) => console.error('Bet failed:', err));
   }, [bet]);
 
   const handleBallLanded = useCallback(
-    (_sinkIndex: number, multiplier: number) => {
-      addResult(multiplier, getMultiplierColor(multiplier).css);
-      setIsGameInProgress(false);
+    (sinkIndex: number, multiplier: number) => {
+      addResult(multiplier, getBinColor(sinkIndex).css);
     },
     [addResult],
   );
@@ -50,16 +47,16 @@ export default function Plinko({ onPlay }: PlinkoProps) {
       <div className="mx-auto flex h-full w-full max-w-7xl flex-col items-stretch justify-center gap-4 p-4 lg:flex-row">
         {/* Controls */}
         <div className="flex w-full items-center lg:w-1/4">
-          <GameBottomControls onBet={handleBet} disabled={isLoading || isGameInProgress} isLoading={isLoading} />
+          <GameBottomControls onBet={handleBet} disabled={!isReady} />
         </div>
 
         {/* Board */}
-        <div className="relative flex flex-1 items-center justify-center">
-          <div className="aspect-square w-full max-w-[800px]">
-            <GameDisplay gameRef={gameRef} onBallLanded={handleBallLanded} />
-          </div>
-          <div className="absolute right-4 top-4 z-10">
-            <HistoryDisplay history={history} />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="relative aspect-square w-full max-w-[800px]">
+            <GameDisplay gameRef={gameRef} onGameReady={() => setIsReady(true)} onBallLanded={handleBallLanded} />
+            <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2">
+              <HistoryDisplay history={history} />
+            </div>
           </div>
         </div>
       </div>

@@ -12,11 +12,13 @@ export function useBetting({
   play: () => Promise<GameResult>;
   drop: (result: GameResult) => void;
 }) {
-  const [isLoading, setIsLoading] = useState(false);
+  // Counter (not a boolean) so concurrent in-flight bets are tracked correctly —
+  // multiple balls can be dropped before any of them lands.
+  const [pending, setPending] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const bet = useCallback(async () => {
-    setIsLoading(true);
+    setPending((p) => p + 1);
     setError(null);
     try {
       const result = await play();
@@ -27,9 +29,9 @@ export function useBetting({
       setError(message);
       throw err;
     } finally {
-      setIsLoading(false);
+      setPending((p) => p - 1);
     }
   }, [play, drop]);
 
-  return { bet, isLoading, error };
+  return { bet, pendingCount: pending, isLoading: pending > 0, error };
 }

@@ -3,14 +3,14 @@ import { memo, useState } from 'react';
 interface GameBottomControlsProps {
   onBet: () => void;
   disabled?: boolean;
-  isLoading?: boolean;
 }
 
 /**
  * Minimal betting panel: a cosmetic bet-amount field and the BET button.
- * (Balance/auth/auto-bet are intentionally out of scope for this build.)
+ * The button stays enabled so multiple balls can be dropped in quick
+ * succession. (Balance/auth/auto-bet are intentionally out of scope.)
  */
-function GameBottomControls({ onBet, disabled = false, isLoading = false }: GameBottomControlsProps) {
+function GameBottomControls({ onBet, disabled = false }: GameBottomControlsProps) {
   const [amount, setAmount] = useState('1.00');
 
   return (
@@ -32,7 +32,7 @@ function GameBottomControls({ onBet, disabled = false, isLoading = false }: Game
         disabled={disabled}
         className="w-full rounded-lg bg-highlight-green py-4 text-lg font-bold text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isLoading ? 'Dropping…' : 'BET'}
+        BET
       </button>
     </div>
   );

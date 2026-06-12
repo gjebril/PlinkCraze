@@ -5,7 +5,7 @@ import type { PlinkoViewMode } from '../game/constants';
 export interface GameDisplayProps {
   gameRef: React.MutableRefObject<PlinkoGame | null>;
   onGameReady?: () => void;
-  onBallLanded?: (sinkIndex: number, multiplier: number) => void;
+  onBallLanded?: (sinkIndex: number, multiplier: number, startX: number) => void;
   viewMode?: PlinkoViewMode;
 }
 
@@ -37,7 +37,7 @@ function GameDisplay({ gameRef, onGameReady, onBallLanded, viewMode = 'normal' }
           setIsLoading(false);
           onGameReadyRef.current?.();
         },
-        onBallLanded: (sinkIndex, multiplier) => onBallLandedRef.current?.(sinkIndex, multiplier),
+        onBallLanded: (sinkIndex, multiplier, startX) => onBallLandedRef.current?.(sinkIndex, multiplier, startX),
       });
     } catch (err) {
       console.error('Failed to initialise Plinko game:', err);
