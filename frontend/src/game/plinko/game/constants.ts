@@ -28,7 +28,7 @@ export const BIN_ROW_Y = LAST_PEG_ROW_Y + PEG_SPACING_Y * 0.7; // 619.5
 export const BIN_CORNER_RADIUS = 4;
 export const BIN_BOTTOM_EDGE = 3; // darker slab lip at the bottom
 export const BIN_TEXT_COLOR = '#1C2127';
-export const BIN_LABEL_FONT = `600 ${Math.round(BIN_WIDTH * 0.38)}px Poppins, sans-serif`;
+export const BIN_LABEL_FONT = `700 ${Math.round(BIN_WIDTH * 0.38)}px Poppins, sans-serif`;
 
 // ── Collision sinks (legacy geometry — DO NOT change: outcomes.json is keyed
 //    to these exact ranges; re-aligning them breaks the imitation) ────────────

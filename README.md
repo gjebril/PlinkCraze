@@ -116,6 +116,15 @@ The game calls an external Plinko API (configured in `frontend/src/game/gameLogi
 - **Headers**: `X-API-Key: 1234`, `Content-Type: application/json`
 - **Config**: 16 rows, Low risk, USDT — multipliers range 0.5x → 16x
 
+### Provably-fair seeds
+
+The API requires an **active seed per user**. A fresh user (or one whose seed
+was rotated/revealed) makes `/play` return `{ success: false, errorType: "NoActiveSeed" }`.
+`gameLogic.ts` self-heals this: on `NoActiveSeed` it calls
+`POST /api/Seeds/CreateInitialGameSeed` for the user and retries the play once.
+The full API (Swagger at `/swagger`) also exposes `/api/Plinko/Verify` and the
+`/api/Seeds/*` endpoints for seed management and provably-fair verification.
+
 ## License
 
 ISC
