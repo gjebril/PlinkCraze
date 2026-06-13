@@ -1,12 +1,10 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPlinkoGame, type PlinkoGame } from '../game/game';
-import type { PlinkoViewMode } from '../game/constants';
 
-export interface GameDisplayProps {
+interface GameDisplayProps {
   gameRef: React.MutableRefObject<PlinkoGame | null>;
   onGameReady?: () => void;
   onBallLanded?: (sinkIndex: number, multiplier: number, startX: number) => void;
-  viewMode?: PlinkoViewMode;
 }
 
 /**
@@ -14,7 +12,7 @@ export interface GameDisplayProps {
  * and forwards scene events to the parent. Callbacks are read through refs so
  * prop changes never force the game to re-initialise (the dice pattern).
  */
-function GameDisplay({ gameRef, onGameReady, onBallLanded, viewMode = 'normal' }: GameDisplayProps) {
+function GameDisplay({ gameRef, onGameReady, onBallLanded }: GameDisplayProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +28,7 @@ function GameDisplay({ gameRef, onGameReady, onBallLanded, viewMode = 'normal' }
     if (!containerRef.current || gameRef.current) return undefined;
 
     try {
-      const game = createPlinkoGame({ parent: containerRef.current }, viewMode);
+      const game = createPlinkoGame({ parent: containerRef.current });
       gameRef.current = game;
       game.setCallbacks({
         onGameReady: () => {
@@ -50,7 +48,7 @@ function GameDisplay({ gameRef, onGameReady, onBallLanded, viewMode = 'normal' }
       ref.current?.destroy();
       ref.current = null;
     };
-  }, [gameRef, viewMode]);
+  }, [gameRef]);
 
   if (error) {
     return (
@@ -72,4 +70,5 @@ function GameDisplay({ gameRef, onGameReady, onBallLanded, viewMode = 'normal' }
   );
 }
 
-export default memo(GameDisplay);
+const MemoGameDisplay = memo(GameDisplay);
+export default MemoGameDisplay;

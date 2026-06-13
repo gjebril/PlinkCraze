@@ -38,4 +38,5 @@ function GameBottomControls({ onBet, disabled = false }: GameBottomControlsProps
   );
 }
 
-export default memo(GameBottomControls);
+const MemoGameBottomControls = memo(GameBottomControls);
+export default MemoGameBottomControls;

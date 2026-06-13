@@ -24,7 +24,7 @@ export default function Plinko({ onPlay }: PlinkoProps) {
   const { history, addResult } = useGameHistory();
 
   const drop = useCallback((result: GameResult) => {
-    gameRef.current?.drop(result);
+    gameRef.current?.drop(result.point);
   }, []);
 
   const { bet } = useBetting({ play: onPlay, drop });

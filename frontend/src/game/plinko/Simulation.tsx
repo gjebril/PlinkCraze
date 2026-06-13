@@ -42,7 +42,7 @@ export default function Simulation() {
     setRunning(true);
     intervalRef.current = window.setInterval(() => {
       const startX = pad(WIDTH / 2 + 20 * (Math.random() - 0.5));
-      gameRef.current?.drop({ point: startX, multiplier: 0, pattern: [] });
+      gameRef.current?.drop(startX);
     }, DROP_INTERVAL_MS);
   }, []);
 

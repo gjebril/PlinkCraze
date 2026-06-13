@@ -5,14 +5,12 @@ import {
   BIN_CORNER_RADIUS,
   BIN_HEIGHT,
   BIN_LABEL_FONT,
-  BIN_LABEL_FONT_MOBILE,
   BIN_ROW_Y,
   BIN_TEXT_COLOR,
   BIN_WIDTH,
   COLORS,
   HEIGHT,
   PEG_DRAW_RADIUS,
-  PlinkoViewMode,
   RIPPLE_DURATION,
   RIPPLE_MAX_RADIUS,
   SINK_SHAKE_DURATION,
@@ -26,13 +24,6 @@ import { pad, unpad } from './padding';
 import { formatMultiplier, getBinColor } from '../utils';
 
 // ── Public types ──────────────────────────────────────────────────────────────
-export interface PlinkoResult {
-  /** Padded start X coordinate from the imitation outcome table. */
-  point: number;
-  multiplier: number;
-  pattern: string[];
-}
-
 export interface PlinkoGameCallbacks {
   onGameReady?: () => void;
   /**
@@ -45,9 +36,9 @@ export interface PlinkoGameCallbacks {
 
 /** Plain handle the React layer talks to — never a raw Phaser object. */
 export type PlinkoGame = {
-  drop: (result: PlinkoResult) => void;
+  /** Drop a ball from a (padded) start X position. */
+  drop: (startX: number) => void;
   setCallbacks: (callbacks: PlinkoGameCallbacks) => void;
-  setMuted: (muted: boolean) => void;
   isReady: () => boolean;
   destroy: () => void;
 };
@@ -72,12 +63,10 @@ class PlinkoScene extends Phaser.Scene {
 
   private callbacks: PlinkoGameCallbacks = {};
   private ready = false;
-  private readonly viewMode: PlinkoViewMode;
   private readonly dpr: number;
 
-  constructor(viewMode: PlinkoViewMode = 'normal', dpr = 1) {
+  constructor(dpr = 1) {
     super({ key: 'PlinkoScene' });
-    this.viewMode = viewMode;
     this.dpr = dpr;
   }
 
@@ -102,9 +91,8 @@ class PlinkoScene extends Phaser.Scene {
     // If Poppins finishes loading after the labels were rasterised, re-apply
     // the font so they pick it up (never blocks game start).
     if (typeof document !== 'undefined' && document.fonts?.ready) {
-      const font = this.viewMode === 'mobile' ? BIN_LABEL_FONT_MOBILE : BIN_LABEL_FONT;
       document.fonts.ready
-        .then(() => this.sinkLabels.forEach((label) => label.setFont(font)))
+        .then(() => this.sinkLabels.forEach((label) => label.setFont(BIN_LABEL_FONT)))
         .catch(() => {
           /* ignore — fallback font is fine */
         });
@@ -127,16 +115,16 @@ class PlinkoScene extends Phaser.Scene {
     return this.ready;
   }
 
-  drop(result: PlinkoResult): void {
-    const startX = result.point || pad(WIDTH / 2 + 13);
+  drop(startX: number): void {
+    const x = startX || pad(WIDTH / 2 + 13);
     const ball = new BallBody(
-      startX,
+      x,
       pad(50),
       ballRadius,
       this.obstacles,
       this.sinks,
-      (index) => this.handleBallLanded(index, startX),
-      (x, y) => this.addRipple(x, y),
+      (index) => this.handleBallLanded(index, x),
+      (rx, ry) => this.addRipple(rx, ry),
     );
     this.balls.push(ball);
   }
@@ -157,10 +145,9 @@ class PlinkoScene extends Phaser.Scene {
   }
 
   private createSinkLabels(): void {
-    const font = this.viewMode === 'mobile' ? BIN_LABEL_FONT_MOBILE : BIN_LABEL_FONT;
     this.sinks.forEach((sink) => {
       const label = this.add
-        .text(0, 0, formatMultiplier(sink.multiplier), { font, color: BIN_TEXT_COLOR })
+        .text(0, 0, formatMultiplier(sink.multiplier), { font: BIN_LABEL_FONT, color: BIN_TEXT_COLOR })
         .setOrigin(0.5)
         .setResolution(this.dpr);
       this.sinkLabels.push(label);
@@ -235,13 +222,10 @@ class PlinkoScene extends Phaser.Scene {
 }
 
 // ── Factory: wraps the scene behind a plain handle ───────────────────────────
-export const createPlinkoGame = (
-  config: Phaser.Types.Core.GameConfig,
-  viewMode: PlinkoViewMode = 'normal',
-): PlinkoGame => {
+export const createPlinkoGame = (config: Phaser.Types.Core.GameConfig): PlinkoGame => {
   // Cap at 2× so 3×/4× displays don't create an enormous backing canvas.
   const dpr = Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2);
-  const scene = new PlinkoScene(viewMode, dpr);
+  const scene = new PlinkoScene(dpr);
 
   const game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -260,11 +244,8 @@ export const createPlinkoGame = (
   });
 
   return {
-    drop: (result) => scene.drop(result),
+    drop: (startX) => scene.drop(startX),
     setCallbacks: (callbacks) => scene.setCallbacks(callbacks),
-    setMuted: () => {
-      /* no sounds in the minimal build — kept for API parity */
-    },
     isReady: () => scene.isReady(),
     destroy: () => game.destroy(true),
   };

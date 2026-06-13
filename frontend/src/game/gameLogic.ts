@@ -24,9 +24,10 @@ export const MULTIPLIERS: {[key: number]: number} = {
 export const outcomes: {[key: string]: number[]} = outcomesData;
 
 export interface GameResult {
+    /** Padded start X position to drop the ball from. */
     point: number;
+    /** Multiplier returned by the API (the ball is guaranteed to land here). */
     multiplier: number;
-    pattern: string[];
 }
 
 // External Plinko API config.
@@ -68,9 +69,7 @@ export const playGame = async (): Promise<GameResult> => {
             throw new Error(response.data?.message || 'Play request was not successful.');
         }
 
-        const { multiplier, plinkoResult } = response.data.data;
-        console.log("External API plinkoResult:", plinkoResult);
-        console.log("External API multiplier:", multiplier);
+        const { multiplier } = response.data.data;
 
         const matchingOutcomeIndices: number[] = [];
         for (const key in MULTIPLIERS) {
@@ -87,24 +86,14 @@ export const playGame = async (): Promise<GameResult> => {
         const outcomeIndex = matchingOutcomeIndices[Math.floor(Math.random() * matchingOutcomeIndices.length)];
 
         const possibleOutcomes = outcomes[outcomeIndex.toString()];
-        console.log("Raw possible outcomes for multiplier", multiplier, "(outcomeIndex", outcomeIndex, "):", possibleOutcomes);
-
         if (!possibleOutcomes || possibleOutcomes.length === 0) {
             console.error("No possible outcomes for multiplier:", multiplier);
             throw new Error("No possible outcomes for the determined multiplier.");
         }
 
-        const transformedPattern = plinkoResult.map((val: number) => val === 0 ? 'L' : 'R');
-        console.log("Transformed Plinko Pattern:", transformedPattern);
-
         const startX = possibleOutcomes[Math.floor(Math.random() * possibleOutcomes.length)];
-        console.log("Chosen startX:", startX);
 
-        return {
-            point: startX,
-            multiplier,
-            pattern: transformedPattern
-        };
+        return { point: startX, multiplier };
 
     } catch (error) {
         const details = axios.isAxiosError(error) ? (error.response?.data ?? error.message) : error;

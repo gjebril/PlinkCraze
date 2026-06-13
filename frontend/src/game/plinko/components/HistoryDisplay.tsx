@@ -29,4 +29,5 @@ function HistoryDisplay({ history }: HistoryDisplayProps) {
   );
 }
 
-export default memo(HistoryDisplay);
+const MemoHistoryDisplay = memo(HistoryDisplay);
+export default MemoHistoryDisplay;

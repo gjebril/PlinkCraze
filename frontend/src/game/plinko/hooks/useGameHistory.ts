@@ -14,7 +14,5 @@ export function useGameHistory() {
     });
   }, []);
 
-  const clearHistory = useCallback(() => setHistory([]), []);
-
-  return { history, addResult, clearHistory };
+  return { history, addResult };
 }

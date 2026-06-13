@@ -28,10 +28,10 @@ export interface Sink {
 }
 
 /** X position of peg `col` in a given row (screen space, unpadded). */
-export const pegX = (row: number, col: number): number => WIDTH / 2 - PEG_SPACING_X * (row / 2 - col);
+const pegX = (row: number, col: number): number => WIDTH / 2 - PEG_SPACING_X * (row / 2 - col);
 
 /** X position of peg `i` in the bottom row. */
-export const lastRowPegX = (i: number): number => pegX(LAST_PEG_ROW, i);
+const lastRowPegX = (i: number): number => pegX(LAST_PEG_ROW, i);
 
 /** Center X of bin `i` = midpoint between bottom-row pegs i and i+1. */
 export const binCenterX = (i: number): number => (lastRowPegX(i) + lastRowPegX(i + 1)) / 2;
