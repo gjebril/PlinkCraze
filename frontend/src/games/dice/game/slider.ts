@@ -78,17 +78,18 @@ export class SliderManager {
       .setOrigin(0)
       .setInteractive({ useHandCursor: true });
 
-    const apply = (pointerX: number) => {
-      const clampedX = Phaser.Math.Clamp(pointerX, this.valueToX(MIN_VALUE), this.valueToX(MAX_VALUE));
+    // Use worldX (not screen x) so the mapping is correct under camera zoom/dpr.
+    const apply = (pointerWorldX: number) => {
+      const clampedX = Phaser.Math.Clamp(pointerWorldX, this.valueToX(MIN_VALUE), this.valueToX(MAX_VALUE));
       this.setSplit(this.xToValue(clampedX), true);
     };
 
     zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
       this.dragging = true;
-      apply(p.x);
+      apply(p.worldX);
     });
     this.scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (this.dragging) apply(p.x);
+      if (this.dragging) apply(p.worldX);
     });
     this.scene.input.on('pointerup', () => {
       this.dragging = false;

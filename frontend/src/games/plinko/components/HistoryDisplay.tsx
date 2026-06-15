@@ -19,7 +19,7 @@ function HistoryDisplay({ history }: HistoryDisplayProps) {
       {newestFirst.map((result, index) => (
         <div
           key={`${result.multiplier}-${index}`}
-          className="flex h-[52px] w-[110px] items-center justify-center text-lg font-bold"
+          className="flex h-[34px] w-[72px] items-center justify-center text-xs font-bold"
           style={{ backgroundColor: result.color, color: BIN_TEXT_COLOR }}
         >
           {formatMultiplier(result.multiplier)}
