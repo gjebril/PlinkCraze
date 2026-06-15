@@ -15,4 +15,12 @@ export interface GameEntry {
   Component: ComponentType;
   /** Optional dev tool, mounted at `${path}/simulation`. */
   Simulation?: ComponentType;
+  /** Short line shown on the menu card. */
+  tagline?: string;
+  /** Accent color (hex) for the menu card. */
+  accent?: string;
+  /** Readiness badge: a finished game vs. a work-in-progress scaffold. */
+  status?: 'ready' | 'wip';
+  /** Small SVG preview rendered on the menu card. */
+  Thumbnail?: ComponentType;
 }
