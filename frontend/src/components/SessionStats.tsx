@@ -16,6 +16,8 @@ function Stat({ label, value, color }: { label: string; value: string; color?: s
 /** Top-center session HUD: total bet, payout, and profit. Cosmetic only. */
 export default function SessionStats() {
   const { totalBet, totalPayout, profit, reset } = useSession();
+  const profitPct = totalBet > 0 ? (profit / totalBet) * 100 : 0;
+  const profitColor = profit >= 0 ? '#00e701' : '#ff2d7e';
 
   return (
     <div
@@ -24,7 +26,8 @@ export default function SessionStats() {
     >
       <Stat label="Bet" value={fmt(totalBet)} />
       <Stat label="Payout" value={fmt(totalPayout)} />
-      <Stat label="Profit" value={`${profit >= 0 ? '+' : ''}${fmt(profit)}`} color={profit >= 0 ? '#00e701' : '#ff2d7e'} />
+      <Stat label="Profit" value={`${profit >= 0 ? '+' : ''}${fmt(profit)}`} color={profitColor} />
+      <Stat label="Profit %" value={`${profit >= 0 ? '+' : ''}${profitPct.toFixed(1)}%`} color={profitColor} />
       <button
         type="button"
         onClick={reset}
