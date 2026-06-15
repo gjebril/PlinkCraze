@@ -58,3 +58,5 @@ coverage/
 # Ignore parent directory files
 ../../*
 ../*
+# Local reference only — not part of the project
+Example-dice/
