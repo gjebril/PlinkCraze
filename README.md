@@ -4,7 +4,7 @@ A collection of proof-of-concept casino games. The frontend is **React + TypeScr
 with each game rendered by **Phaser 3**; the shared **Express** backend returns predetermined
 ("imitation") outcomes that each game animates deterministically.
 
-**Games:** Plinko (more to come).
+**Games:** Plinko (complete) · Dice (scaffold — Phaser slider scene is a stub for the team to flesh out; API client, controls, registry wiring all done).
 
 ## How a game works (Plinko)
 
@@ -77,6 +77,7 @@ CrazePOCGames/
 - `/` — games menu
 - `/plinko` — the Plinko game
 - `/plinko/simulation` — Plinko dev/simulation tool
+- `/dice` — the Dice game (scaffold; see `games/dice/game/game.ts` for the scene TODOs)
 
 ## Simulation tool
 

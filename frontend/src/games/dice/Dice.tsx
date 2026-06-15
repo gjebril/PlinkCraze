@@ -1,0 +1,91 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+import GameBottomControls from './components/GameBottomControls';
+import GameDisplay from './components/GameDisplay';
+import HistoryDisplay from './components/HistoryDisplay';
+import type { DiceGame } from './game/game';
+import type { DiceDirection, DiceResult } from './gameLogic';
+import { useBetting } from './hooks/useBetting';
+import { useGameHistory } from './hooks/useGameHistory';
+import { multiplier, winChance } from './utils';
+
+export interface DiceProps {
+  /** Calls the roll API for the given bet. */
+  onPlay: (amount: number, target: number, direction: DiceDirection) => Promise<DiceResult>;
+}
+
+/**
+ * Dice orchestrator: owns bet/target/direction state, drives the scene, and
+ * records history. Mirrors Plinko.tsx. (The Phaser scene itself is a scaffold —
+ * see game/game.ts.)
+ */
+export default function Dice({ onPlay }: DiceProps) {
+  const gameRef = useRef<DiceGame | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [amount, setAmount] = useState('1.00');
+  const [target, setTarget] = useState(50);
+  const [direction, setDirection] = useState<DiceDirection>('Above');
+  const { history, addResult } = useGameHistory();
+
+  const handleTargetChange = useCallback((value: number) => {
+    setTarget(value);
+    gameRef.current?.setTarget(value);
+  }, []);
+
+  const toggleDirection = useCallback(() => {
+    setDirection((prev) => {
+      const next = prev === 'Above' ? 'Under' : 'Above';
+      gameRef.current?.setDirection(next);
+      return next;
+    });
+  }, []);
+
+  const onResult = useCallback(
+    (result: DiceResult) => {
+      gameRef.current?.roll(result.resultValue, result.isWin);
+      addResult(result);
+    },
+    [addResult],
+  );
+
+  const { bet, isLoading } = useBetting({
+    play: () => onPlay(Number(amount), target, direction),
+    onResult,
+  });
+
+  const handleRoll = useCallback(() => {
+    bet().catch((err) => console.error('Roll failed:', err));
+  }, [bet]);
+
+  const multiplierValue = useMemo(() => multiplier(target, direction), [target, direction]);
+  const winChanceValue = useMemo(() => winChance(target, direction), [target, direction]);
+
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-dark-blue">
+      <div className="mx-auto flex h-full w-full max-w-7xl flex-col items-stretch justify-center gap-4 p-4 lg:flex-row">
+        <div className="flex w-full items-center lg:w-1/4">
+          <GameBottomControls
+            amount={amount}
+            onAmountChange={setAmount}
+            target={target}
+            onTargetChange={handleTargetChange}
+            direction={direction}
+            onToggleDirection={toggleDirection}
+            multiplierValue={multiplierValue}
+            winChanceValue={winChanceValue}
+            onRoll={handleRoll}
+            disabled={!isReady || isLoading}
+          />
+        </div>
+
+        <div className="flex flex-1 items-center justify-center">
+          <div className="relative flex aspect-[800/260] w-full max-w-[800px] items-center">
+            <GameDisplay gameRef={gameRef} onGameReady={() => setIsReady(true)} />
+            <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2">
+              <HistoryDisplay history={history} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
