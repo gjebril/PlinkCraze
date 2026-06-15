@@ -4,18 +4,21 @@ import { createDiceGame, type DiceGame } from '../game/game';
 interface GameDisplayProps {
   gameRef: React.MutableRefObject<DiceGame | null>;
   onGameReady?: () => void;
+  onTargetChange?: (value: number) => void;
 }
 
 /** React ↔ Phaser bridge for the Dice scene (mirrors Plinko's GameDisplay). */
-function GameDisplay({ gameRef, onGameReady }: GameDisplayProps) {
+function GameDisplay({ gameRef, onGameReady, onTargetChange }: GameDisplayProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const onGameReadyRef = useRef(onGameReady);
+  const onTargetChangeRef = useRef(onTargetChange);
   useEffect(() => {
     onGameReadyRef.current = onGameReady;
-  }, [onGameReady]);
+    onTargetChangeRef.current = onTargetChange;
+  }, [onGameReady, onTargetChange]);
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return undefined;
@@ -28,6 +31,7 @@ function GameDisplay({ gameRef, onGameReady }: GameDisplayProps) {
           setIsLoading(false);
           onGameReadyRef.current?.();
         },
+        onTargetChange: (value) => onTargetChangeRef.current?.(value),
       });
     } catch (err) {
       console.error('Failed to initialise Dice game:', err);

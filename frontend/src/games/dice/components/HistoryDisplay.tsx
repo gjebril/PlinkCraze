@@ -18,7 +18,7 @@ function HistoryDisplay({ history }: HistoryDisplayProps) {
         <div
           key={`${r.betId}-${index}`}
           className="flex h-[44px] w-[88px] items-center justify-center rounded-md text-sm font-bold text-black shadow-md"
-          style={{ backgroundColor: toHex(r.isWin ? COLORS.WIN : COLORS.LOSS) }}
+          style={{ backgroundColor: toHex(r.isWin ? COLORS.GREEN_TOP : COLORS.RED_TOP) }}
         >
           {r.resultValue.toFixed(2)}
         </div>

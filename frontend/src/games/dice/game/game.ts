@@ -1,38 +1,34 @@
 import Phaser from 'phaser';
-import { COLORS, HEIGHT, WIDTH } from './constants';
+import { COLORS, HEIGHT, INDICATOR_FONT, SLIDER, WIDTH } from './constants';
+import { SliderManager } from './slider';
+import type { DiceDirection } from '../gameLogic';
 
-// ── Public types ──────────────────────────────────────────────────────────────
 export interface DiceGameCallbacks {
   onGameReady?: () => void;
+  /** Fired when the player drags the target on the slider. */
+  onTargetChange?: (value: number) => void;
 }
 
-/**
- * Plain handle the React layer talks to — mirrors Plinko's `createPlinkoGame`.
- * The React side never touches a raw Phaser object.
- */
+/** Plain handle the React layer talks to (mirrors Plinko's createPlinkoGame). */
 export type DiceGame = {
-  /** Animate the rolled result onto the slider. */
+  /** Animate the rolled result along the slider. */
   roll: (resultValue: number, isWin: boolean) => void;
-  /** Move the target marker (0–100). */
-  setTarget: (userValue: number) => void;
-  /** Switch win side. */
-  setDirection: (direction: 'Above' | 'Under') => void;
+  setTarget: (value: number) => void;
+  setDirection: (direction: DiceDirection) => void;
   setCallbacks: (callbacks: DiceGameCallbacks) => void;
   isReady: () => boolean;
   destroy: () => void;
 };
 
-const TRACK_MARGIN = 60;
-const valueToX = (value: number) => TRACK_MARGIN + (value / 100) * (WIDTH - 2 * TRACK_MARGIN);
+const INDICATOR_Y = SLIDER.Y - 54;
+const DIAMOND = 48;
 
-// ── Scene ─────────────────────────────────────────────────────────────────────
-// ⚠️ SCAFFOLD: this renders a static slider so the route is navigable. The
-// team should flesh out the full dice experience here. TODOs are marked below.
 class DiceScene extends Phaser.Scene {
-  private gfx!: Phaser.GameObjects.Graphics;
-  private target = 50;
-  private direction: 'Above' | 'Under' = 'Above';
-  private resultValue: number | null = null;
+  private slider!: SliderManager;
+  private indicator!: Phaser.GameObjects.Container;
+  private diamond!: Phaser.GameObjects.Graphics;
+  private indicatorText!: Phaser.GameObjects.Text;
+  private rollTween?: Phaser.Tweens.Tween;
   private callbacks: DiceGameCallbacks = {};
   private ready = false;
   private readonly dpr: number;
@@ -45,64 +41,59 @@ class DiceScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setZoom(this.dpr);
     this.cameras.main.centerOn(WIDTH / 2, HEIGHT / 2);
-    this.gfx = this.add.graphics();
-    this.draw();
 
-    // TODO(team): replace this placeholder with the real scene —
-    //   • draggable target handle (pointer events → setTarget + onTargetChange)
-    //   • animated result marker that flies to `resultValue` (tween)
-    //   • numeric tick labels (0, 25, 50, 75, 100) using SLIDER_LABEL_FONT
-    //   • win/loss flash + optional sound on settle
-    this.add
-      .text(WIDTH / 2, 40, 'Dice scene — TODO', {
-        font: '700 18px Poppins, sans-serif',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5)
-      .setResolution(this.dpr);
+    this.slider = new SliderManager(this);
+    this.slider.setCallbacks({
+      onValueChange: (value) => {
+        this.indicator.x = this.slider.valueToX(value);
+        this.indicatorText.setText('');
+        this.callbacks.onTargetChange?.(value);
+      },
+    });
+    this.slider.create();
+    this.buildIndicator();
 
     this.ready = true;
     this.callbacks.onGameReady?.();
-  }
 
-  private draw(): void {
-    const y = HEIGHT / 2;
-    const left = valueToX(0);
-    const right = valueToX(100);
-    const split = valueToX(this.target);
-
-    this.gfx.clear();
-    // Base track
-    this.gfx.fillStyle(COLORS.TRACK, 1);
-    this.gfx.fillRoundedRect(left, y - 8, right - left, 16, 8);
-
-    // Win / loss zones split at the target
-    const winColor = COLORS.WIN;
-    const lossColor = COLORS.LOSS;
-    if (this.direction === 'Above') {
-      this.gfx.fillStyle(lossColor, 1);
-      this.gfx.fillRect(left, y - 8, split - left, 16);
-      this.gfx.fillStyle(winColor, 1);
-      this.gfx.fillRect(split, y - 8, right - split, 16);
-    } else {
-      this.gfx.fillStyle(winColor, 1);
-      this.gfx.fillRect(left, y - 8, split - left, 16);
-      this.gfx.fillStyle(lossColor, 1);
-      this.gfx.fillRect(split, y - 8, right - split, 16);
-    }
-
-    // Target handle
-    this.gfx.fillStyle(COLORS.TARGET, 1);
-    this.gfx.fillRoundedRect(split - 5, y - 22, 10, 44, 3);
-
-    // Result marker (static for now — TODO animate)
-    if (this.resultValue !== null) {
-      this.gfx.fillStyle(COLORS.MARKER, 1);
-      this.gfx.fillCircle(valueToX(this.resultValue), y, 12);
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready
+        .then(() => {
+          this.slider.refreshFonts();
+          this.indicatorText.setFont(INDICATOR_FONT);
+        })
+        .catch(() => {
+          /* fallback font is fine */
+        });
     }
   }
 
-  // ── Public API ────────────────────────────────────────────────────────────
+  private buildIndicator(): void {
+    this.diamond = this.add.graphics();
+    this.drawDiamond(COLORS.INDICATOR);
+    this.indicatorText = this.add
+      .text(0, 0, '', { font: INDICATOR_FONT, color: '#0b1418' })
+      .setOrigin(0.5)
+      .setResolution(this.dpr);
+    this.indicator = this.add
+      .container(this.slider.valueToX(this.slider.getSplit()), INDICATOR_Y, [this.diamond, this.indicatorText])
+      .setDepth(10);
+  }
+
+  private drawDiamond(color: number): void {
+    const s = DIAMOND;
+    this.diamond.clear();
+    this.diamond.fillStyle(color, 1);
+    this.diamond.beginPath();
+    this.diamond.moveTo(0, -s / 2);
+    this.diamond.lineTo(s / 2, 0);
+    this.diamond.lineTo(0, s / 2);
+    this.diamond.lineTo(-s / 2, 0);
+    this.diamond.closePath();
+    this.diamond.fillPath();
+  }
+
+  // ── Public API ──────────────────────────────────────────────────────────────
   setCallbacks(callbacks: DiceGameCallbacks): void {
     this.callbacks = callbacks;
   }
@@ -111,20 +102,27 @@ class DiceScene extends Phaser.Scene {
     return this.ready;
   }
 
-  setTarget(userValue: number): void {
-    this.target = userValue;
-    this.draw();
+  setTarget(value: number): void {
+    this.slider.setSplit(value);
+    if (this.indicator && !this.indicatorText.text) {
+      this.indicator.x = this.slider.valueToX(value);
+    }
   }
 
-  setDirection(direction: 'Above' | 'Under'): void {
-    this.direction = direction;
-    this.draw();
+  setDirection(direction: DiceDirection): void {
+    this.slider.setDirection(direction);
   }
 
-  roll(resultValue: number): void {
-    // TODO(team): animate the marker to `resultValue` instead of snapping.
-    this.resultValue = resultValue;
-    this.draw();
+  roll(resultValue: number, isWin: boolean): void {
+    this.drawDiamond(isWin ? COLORS.GREEN_TOP : COLORS.RED_TOP);
+    this.indicatorText.setText(resultValue.toFixed(2));
+    this.rollTween?.stop();
+    this.rollTween = this.tweens.add({
+      targets: this.indicator,
+      x: this.slider.valueToX(resultValue),
+      duration: 500,
+      ease: 'Cubic.easeOut',
+    });
   }
 }
 
@@ -150,8 +148,8 @@ export const createDiceGame = (config: Phaser.Types.Core.GameConfig): DiceGame =
   });
 
   return {
-    roll: (resultValue) => scene.roll(resultValue),
-    setTarget: (userValue) => scene.setTarget(userValue),
+    roll: (resultValue, isWin) => scene.roll(resultValue, isWin),
+    setTarget: (value) => scene.setTarget(value),
     setDirection: (direction) => scene.setDirection(direction),
     setCallbacks: (callbacks) => scene.setCallbacks(callbacks),
     isReady: () => scene.isReady(),

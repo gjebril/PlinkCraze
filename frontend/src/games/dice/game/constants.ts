@@ -1,15 +1,44 @@
-// Dice scene dimensions and palette. Tune freely — Dice has no outcome table,
-// so unlike Plinko none of these values affect correctness.
-export const WIDTH = 800;
-export const HEIGHT = 260;
+// Dice scene — ported from the reference dice game (graphics-based slider).
+// No outcome table, so these values are purely cosmetic and safe to tune.
+export const WIDTH = 900;
+export const HEIGHT = 320;
+
+// Draggable target range (matches the reference clamp).
+export const MIN_VALUE = 2;
+export const MAX_VALUE = 98;
 
 export const COLORS = {
   BACKGROUND: '#20262E',
-  TRACK: 0x3a434f,
-  WIN: 0x00e701, // green zone
-  LOSS: 0xf2256e, // pink/red zone
-  TARGET: 0xffffff,
-  MARKER: 0xffd400,
+  BORDER: 0x37474f,
+  GAP: 0x20262e,
+  SLIDER_BG: 0x3e4b5b,
+  THUMB: 0x00d1e0,
+  THUMB_LINE: 0x007777,
+  TICK: 0x20262e,
+  RED_TOP: 0xff3490,
+  RED_BOTTOM: 0xad0743,
+  GREEN_TOP: 0x2fff2b,
+  GREEN_BOTTOM: 0x008b05,
+  INDICATOR: 0x00d1e0,
+  WIN_TEXT: '#2fff2b',
+  LOSS_TEXT: '#ff3490',
 };
 
-export const SLIDER_LABEL_FONT = '700 16px Poppins, sans-serif';
+// Slider geometry (reference NORMAL_VIEW_BASE proportions).
+export const SLIDER = {
+  HEIGHT: 16,
+  RADIUS: 6,
+  OUTER_RADIUS: 36,
+  GAP: 16,
+  BORDER: 14,
+  MARGIN_PCT: 0.1,
+  Y: 160, // top of the slider bar
+  TICK_WIDTH: 4,
+  TICK_HEIGHT: 12,
+  THUMB_LINE_WIDTH: 18,
+};
+
+export const SLIDER_LABELS = [0, 25, 50, 75, 100];
+
+export const LABEL_FONT = '600 22px Poppins, sans-serif';
+export const INDICATOR_FONT = '700 22px Poppins, sans-serif';

@@ -5,7 +5,6 @@ interface GameBottomControlsProps {
   amount: string;
   onAmountChange: (value: string) => void;
   target: number;
-  onTargetChange: (value: number) => void;
   direction: DiceDirection;
   onToggleDirection: () => void;
   multiplierValue: number;
@@ -14,12 +13,14 @@ interface GameBottomControlsProps {
   disabled?: boolean;
 }
 
-/** Bet amount, target slider, direction toggle, and the ROLL button. */
+/**
+ * Bet amount, direction toggle, live multiplier/win-chance, and ROLL.
+ * The target is set by dragging the slider on the board itself.
+ */
 function GameBottomControls({
   amount,
   onAmountChange,
   target,
-  onTargetChange,
   direction,
   onToggleDirection,
   multiplierValue,
@@ -40,30 +41,18 @@ function GameBottomControls({
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-xs font-medium text-light-gray">
-        Target: {target.toFixed(0)} ({direction})
-        <input
-          type="range"
-          min={2}
-          max={98}
-          value={target}
-          onChange={(e) => onTargetChange(Number(e.target.value))}
-          className="w-full"
-        />
-      </label>
-
-      <div className="flex items-center justify-between text-xs text-light-gray">
-        <span>Multiplier: {multiplierValue.toFixed(4)}x</span>
-        <span>Win chance: {winChanceValue.toFixed(2)}%</span>
-      </div>
-
       <button
         type="button"
         onClick={onToggleDirection}
         className="rounded-md border border-dark-gray py-2 text-sm font-medium text-light-gray hover:text-white"
       >
-        Roll {direction} ⇄
+        Roll {direction} {target.toFixed(0)} ⇄
       </button>
+
+      <div className="flex items-center justify-between rounded-md bg-dark-blue px-3 py-2 text-xs text-light-gray">
+        <span>{multiplierValue.toFixed(4)}x</span>
+        <span>{winChanceValue.toFixed(2)}% win</span>
+      </div>
 
       <button
         type="button"

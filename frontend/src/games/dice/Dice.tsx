@@ -26,10 +26,14 @@ export default function Dice({ onPlay }: DiceProps) {
   const [direction, setDirection] = useState<DiceDirection>('Above');
   const { history, addResult } = useGameHistory();
 
-  const handleTargetChange = useCallback((value: number) => {
-    setTarget(value);
-    gameRef.current?.setTarget(value);
-  }, []);
+  // The slider drag on the board is the source of truth for the target.
+  const handleTargetChange = useCallback((value: number) => setTarget(value), []);
+
+  const handleReady = useCallback(() => {
+    setIsReady(true);
+    gameRef.current?.setDirection(direction);
+    gameRef.current?.setTarget(target);
+  }, [direction, target]);
 
   const toggleDirection = useCallback(() => {
     setDirection((prev) => {
@@ -67,7 +71,6 @@ export default function Dice({ onPlay }: DiceProps) {
             amount={amount}
             onAmountChange={setAmount}
             target={target}
-            onTargetChange={handleTargetChange}
             direction={direction}
             onToggleDirection={toggleDirection}
             multiplierValue={multiplierValue}
@@ -78,8 +81,8 @@ export default function Dice({ onPlay }: DiceProps) {
         </div>
 
         <div className="flex flex-1 items-center justify-center">
-          <div className="relative flex aspect-[800/260] w-full max-w-[800px] items-center">
-            <GameDisplay gameRef={gameRef} onGameReady={() => setIsReady(true)} />
+          <div className="relative flex aspect-[900/320] w-full max-w-[900px] items-center">
+            <GameDisplay gameRef={gameRef} onGameReady={handleReady} onTargetChange={handleTargetChange} />
             <div className="absolute right-2 top-1/2 z-10 -translate-y-1/2">
               <HistoryDisplay history={history} />
             </div>
