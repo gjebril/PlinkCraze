@@ -20,8 +20,6 @@ export const COLORS = {
   GREEN_TOP: 0x2fff2b,
   GREEN_BOTTOM: 0x008b05,
   INDICATOR: 0x00d1e0,
-  WIN_TEXT: '#2fff2b',
-  LOSS_TEXT: '#ff3490',
 };
 
 // Slider geometry (reference NORMAL_VIEW_BASE proportions).
