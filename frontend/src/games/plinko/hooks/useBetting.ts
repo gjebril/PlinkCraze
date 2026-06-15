@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { GameResult } from '../../gameLogic';
+import type { GameResult } from '../gameLogic';
 
 /**
  * Bridges a bet request to the game: calls the backend imitation API, then

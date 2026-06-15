@@ -1,31 +1,29 @@
-import { useSyncExternalStore } from 'react';
-import { PlinkoWrapper } from './game/plinko';
-import Simulation from './game/plinko/Simulation';
-
-/** Tiny hash-based view switch — avoids pulling in a router for two screens. */
-function useHash(): string {
-  return useSyncExternalStore(
-    (onChange) => {
-      window.addEventListener('hashchange', onChange);
-      return () => window.removeEventListener('hashchange', onChange);
-    },
-    () => window.location.hash,
-  );
-}
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import GameShell from './components/GameShell';
+import { GAMES } from './games';
+import Home from './pages/Home';
 
 function App() {
-  const isSimulation = useHash() === '#simulation';
-
   return (
-    <>
-      {isSimulation ? <Simulation /> : <PlinkoWrapper />}
-      <a
-        href={isSimulation ? '#' : '#simulation'}
-        className="fixed bottom-3 left-3 z-50 rounded bg-dark-blue-secondary px-3 py-1 text-xs text-light-gray/70 transition-colors hover:text-white"
-      >
-        {isSimulation ? '← Game' : 'Simulation ↗'}
-      </a>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+
+        {GAMES.map((game) => {
+          const Game = game.Component;
+          return <Route key={game.id} path={game.path} element={<GameShell><Game /></GameShell>} />;
+        })}
+
+        {GAMES.filter((game) => game.Simulation).map((game) => {
+          const Sim = game.Simulation!;
+          return (
+            <Route key={`${game.id}-sim`} path={`${game.path}/simulation`} element={<GameShell><Sim /></GameShell>} />
+          );
+        })}
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

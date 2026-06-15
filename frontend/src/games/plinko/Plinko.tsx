@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type { GameResult } from '../gameLogic';
+import type { GameResult } from './gameLogic';
 import GameBottomControls from './components/GameBottomControls';
 import GameDisplay from './components/GameDisplay';
 import HistoryDisplay from './components/HistoryDisplay';

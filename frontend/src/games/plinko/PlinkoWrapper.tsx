@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { playGame } from '../gameLogic';
+import { playGame } from './gameLogic';
 import Plinko from './Plinko';
 
 /**
