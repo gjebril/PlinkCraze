@@ -2,11 +2,13 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import GameShell from './components/GameShell';
 import { GAMES } from './games';
 import Home from './pages/Home';
+import { SessionProvider } from './session/SessionProvider';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <SessionProvider>
+      <BrowserRouter>
+        <Routes>
         <Route path="/" element={<Home />} />
 
         {GAMES.map((game) => {
@@ -22,8 +24,9 @@ function App() {
         })}
 
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </SessionProvider>
   );
 }
 

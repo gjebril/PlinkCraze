@@ -11,6 +11,8 @@ import { getBinColor } from './utils';
 export interface PlinkoProps {
   /** Calls the backend imitation API and resolves the predetermined result. */
   onPlay: () => Promise<GameResult>;
+  /** Reports a settled bet and its payout for the session HUD. */
+  onSettled?: (bet: number, payout: number) => void;
 }
 
 /**
@@ -18,9 +20,10 @@ export interface PlinkoProps {
  * the Phaser board (GameDisplay) to the controls. Knows nothing about how the
  * result is fetched — that's the wrapper's job.
  */
-export default function Plinko({ onPlay }: PlinkoProps) {
+export default function Plinko({ onPlay, onSettled }: PlinkoProps) {
   const gameRef = useRef<PlinkoGame | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [amount, setAmount] = useState('1.00');
   const { history, addResult } = useGameHistory();
 
   const drop = useCallback((result: GameResult) => {
@@ -38,8 +41,10 @@ export default function Plinko({ onPlay }: PlinkoProps) {
   const handleBallLanded = useCallback(
     (sinkIndex: number, multiplier: number) => {
       addResult(multiplier, getBinColor(sinkIndex).css);
+      const stake = Number(amount) || 0;
+      onSettled?.(stake, stake * multiplier);
     },
-    [addResult],
+    [addResult, amount, onSettled],
   );
 
   return (
@@ -47,7 +52,7 @@ export default function Plinko({ onPlay }: PlinkoProps) {
       <div className="mx-auto flex h-full w-full max-w-7xl flex-col items-stretch justify-center gap-4 p-4 lg:flex-row">
         {/* Controls */}
         <div className="flex w-full items-center lg:w-1/4">
-          <GameBottomControls onBet={handleBet} disabled={!isReady} />
+          <GameBottomControls amount={amount} onAmountChange={setAmount} onBet={handleBet} disabled={!isReady} />
         </div>
 
         {/* Board */}

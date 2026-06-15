@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import SessionStats from './SessionStats';
 
-/** Wraps a game route with a persistent "back to games" link. */
+/** Wraps a game route with a "back to games" link and the session HUD. */
 export default function GameShell({ children }: { children: ReactNode }) {
   return (
     <>
@@ -12,6 +13,7 @@ export default function GameShell({ children }: { children: ReactNode }) {
       >
         ← Games
       </Link>
+      <SessionStats />
     </>
   );
 }

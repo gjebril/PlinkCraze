@@ -11,6 +11,8 @@ import { multiplier, winChance } from './utils';
 export interface DiceProps {
   /** Calls the roll API for the given bet. */
   onPlay: (amount: number, target: number, direction: DiceDirection) => Promise<DiceResult>;
+  /** Reports a settled bet and its payout for the session HUD. */
+  onSettled?: (bet: number, payout: number) => void;
 }
 
 /**
@@ -18,7 +20,7 @@ export interface DiceProps {
  * records history. Mirrors Plinko.tsx. (The Phaser scene itself is a scaffold —
  * see game/game.ts.)
  */
-export default function Dice({ onPlay }: DiceProps) {
+export default function Dice({ onPlay, onSettled }: DiceProps) {
   const gameRef = useRef<DiceGame | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [amount, setAmount] = useState('1.00');
@@ -47,8 +49,9 @@ export default function Dice({ onPlay }: DiceProps) {
     (result: DiceResult) => {
       gameRef.current?.roll(result.resultValue, result.isWin);
       addResult(result);
+      onSettled?.(Number(amount) || 0, result.payout);
     },
-    [addResult],
+    [addResult, amount, onSettled],
   );
 
   const { bet, isLoading } = useBetting({
